@@ -13,7 +13,7 @@ public func extractMoonDocs(_ source: String, declLine: Int) -> String? {
     var docLines: [String] = []
     var i = declLine - 2
 
-    while i >= 0 {
+    while i >= 0, i < lines.count {
         let raw = lines[i]
         let trimmed = raw.trimmingCharacters(in: .whitespaces)
 

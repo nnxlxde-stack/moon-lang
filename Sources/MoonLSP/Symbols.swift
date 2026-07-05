@@ -198,18 +198,51 @@ public func definitionLocation(
 }
 
 private func indexProgramSymbols(_ program: Program, source: String, filePath: String) -> [SymbolInfo] {
-    indexProgram(program, source: source, filePath: filePath, moduleName: URL(fileURLWithPath: filePath).deletingPathExtension().lastPathComponent)
-        .map { entry in
-            SymbolInfo(
-                name: entry.name,
-                type: entry.type,
-                filePath: entry.file,
-                line: entry.range.start.line,
-                character: entry.range.start.character,
-                range: entry.range,
-                docs: entry.docs
-            )
+    var entries: [SymbolInfo] = []
+    for decl in program.declarations {
+        switch decl {
+        case .model(let m, let span):
+            entries.append(symbolEntry(m.name, type: "model \(m.name)", span: span, filePath: filePath, source: source))
+        case .agent(let a, let span):
+            entries.append(symbolEntry(a.name, type: "agent \(a.name)", span: span, filePath: filePath, source: source))
+        case .data(let d, let span):
+            entries.append(symbolEntry(d.name, type: "data \(d.name)", span: span, filePath: filePath, source: source))
+            for ctor in d.constructors {
+                entries.append(symbolEntry(ctor.name, type: ctor.name, span: ctor.span, filePath: filePath, source: source))
+            }
+        case .function(let f, _):
+            if let sig = f.signature {
+                entries.append(symbolEntry(
+                    sig.name,
+                    type: formatType(instantiate(typeSpecToScheme(sig.type), supply: freshVar)),
+                    span: sig.span,
+                    filePath: filePath,
+                    source: source
+                ))
+            }
+        default:
+            break
         }
+    }
+    return entries
+}
+
+private func symbolEntry(
+    _ name: String,
+    type: String,
+    span: Span,
+    filePath: String,
+    source: String
+) -> SymbolInfo {
+    SymbolInfo(
+        name: name,
+        type: type,
+        filePath: filePath,
+        line: max(0, span.start.line - 1),
+        character: max(0, span.start.column - 1),
+        range: spanToRange(span, name: name),
+        docs: extractMoonDocs(source, declLine: span.start.line)
+    )
 }
 
 private func findSymbolLine(in filePath: String, name: String) -> Int? {
