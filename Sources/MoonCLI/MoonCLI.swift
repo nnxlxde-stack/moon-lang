@@ -472,7 +472,8 @@ struct MoonCLI {
         print("  MoonRegistry   \(MoonRegistryVersion.current)")
         print("  MoonFormatter  \(MoonFormatterVersion.current)")
         print("  MoonLSP        \(MoonLSPVersion.current)")
-        print("  legacy TS/Bun  reference only (Swift toolchain complete)")
+        print("  moon-vscode     https://github.com/nnxlxde-stack/moon-vscode")
+        print("  moon-pkg        https://github.com/nnxlxde-stack/moon-pkg")
     }
 
     private static func printUsage() {
@@ -494,9 +495,9 @@ struct MoonCLI {
           version             Toolchain versions
           help                Show this help
 
-        Legacy TypeScript toolchain:
-          bun run legacy:check
-          bun run legacy:run
+        Related repositories:
+          moon-vscode  VS Code / Cursor extension
+          moon-pkg     Package registry specification
         """)
     }
 }

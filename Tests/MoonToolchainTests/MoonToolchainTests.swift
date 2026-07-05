@@ -303,7 +303,7 @@ private let repoRoot: URL = {
 }
 
 @Test func vendorFixturePackage() throws {
-    let fixture = repoRoot.appendingPathComponent("registry/fixtures/review-kit").path
+    let fixture = repoRoot.appendingPathComponent("Tests/fixtures/review-kit").path
     let outRoot = repoRoot.appendingPathComponent(".moon/vendor-test-\(UUID().uuidString)").path
     defer { try? FileManager.default.removeItem(atPath: outRoot) }
 
@@ -317,7 +317,7 @@ private let repoRoot: URL = {
 }
 
 @Test func resolveVendoredGitImport() throws {
-    let fixture = repoRoot.appendingPathComponent("registry/fixtures/review-kit").path
+    let fixture = repoRoot.appendingPathComponent("Tests/fixtures/review-kit").path
     let outRoot = repoRoot.appendingPathComponent(".moon/resolver-vendor-test").path
     defer { try? FileManager.default.removeItem(atPath: outRoot) }
 
@@ -663,7 +663,7 @@ private let repoRoot: URL = {
 
 private func assertGoldenDag(name: String) throws {
     let examplePath = repoRoot.appendingPathComponent("examples/code-analyzer.moon")
-    let goldenPath = repoRoot.appendingPathComponent("legacy/tests/golden/dag/\(name).json")
+    let goldenPath = repoRoot.appendingPathComponent("Tests/fixtures/golden/dag/\(name).json")
 
     let src = try String(contentsOf: examplePath, encoding: .utf8)
     let program = try MoonParser().parse(src)
@@ -685,7 +685,7 @@ private func assertGoldenDag(name: String) throws {
 
 private func assertGolden(name: String) throws {
     let examplePath = repoRoot.appendingPathComponent("examples/\(name).moon")
-    let goldenPath = repoRoot.appendingPathComponent("legacy/tests/golden/\(name).json")
+    let goldenPath = repoRoot.appendingPathComponent("Tests/fixtures/golden/\(name).json")
 
     let src = try String(contentsOf: examplePath, encoding: .utf8)
     let program = try MoonParser().parse(src)

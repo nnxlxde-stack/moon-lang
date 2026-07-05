@@ -5,4 +5,8 @@ moon-symbols.json
 *.vsix
 .env
 .moon/
-legacy/tests/.trace-test/
+agent-tools/
+reports/
+reviews/
+terminals/
+.DS_Store

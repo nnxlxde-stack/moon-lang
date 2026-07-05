@@ -1,4 +1,4 @@
-# The Moon Language
+# Moon Language
 
 **Moon** — AI-native язык программирования для описания LLM-агентов, типизированных моделей данных и монадических пайплайнов. Синтаксис вдохновлён Haskell; конфигурация проекта — манифестом **Moonfile** в духе SwiftPM.
 
@@ -7,6 +7,16 @@
 <p align="center">
   <a href="docs/index.html"><strong>📖 Полная документация</strong></a>
 </p>
+
+## Экосистема
+
+| Репозиторий | Описание |
+|-------------|----------|
+| **moon-lang** (этот репозиторий) | Интерпретатор, CLI, LSP |
+| [moon-vscode](https://github.com/nnxlxde-stack/moon-vscode) | Расширение VS Code / Cursor |
+| [moon-pkg](https://github.com/nnxlxde-stack/moon-pkg) | Спецификация пакетного реестра |
+
+Исторический TypeScript/Bun toolchain — ветка [`legacy`](https://github.com/nnxlxde-stack/moon-lang/tree/legacy).
 
 ---
 
@@ -17,21 +27,18 @@
 - **Do-блоки** — монадический `IO` с `bind`, `with`-контекстом и вызовами `agent.analyze`
 - **Storm** — мульти-агентные дебаты с панелью и синтезатором
 - **Moonfile** — targets, провайдеры, runtime, модели по умолчанию
-- **Toolchain** — Swift CLI (check, run, build, plan, format, lsp, registry), LSP, расширение VS Code / Cursor
+- **Toolchain** — Swift CLI (check, run, build, plan, format, lsp, registry), LSP
 
 ## Быстрый старт
 
 ### Требования
 
-- **Swift 6.3+** (основной toolchain, Windows/macOS/Linux)
-- [Bun](https://bun.sh) 1.1+ (опционально: VS Code extension packaging)
+- **Swift 6.3+** (Windows/macOS/Linux)
 - `DEEPSEEK_API_KEY` — для реальных LLM-вызовов (`moon run --no-mock`)
 - `GITHUB_TOKEN` — для реальных GitHub API вызовов (`Core.GitHub`)
 
-### Swift toolchain (новый)
-
 ```bash
-git clone https://github.com/moon-lang/moon-lang.git
+git clone https://github.com/nnxlxde-stack/moon-lang.git
 cd moon-lang
 swift build
 swift test
@@ -98,7 +105,7 @@ models:
 | `moon vendor` | Vendor git-зависимостей из Moonfile |
 | `moon publish` | Валидация пакета и git-тег |
 | `moon format <file> [--write\|--check]` | Форматирование |
-| `moon lsp` | Language Server (stdio, Swift) |
+| `moon lsp` | Language Server (stdio) |
 | `moon version` | Версии модулей toolchain |
 
 `moon run --no-mock` требует `DEEPSEEK_API_KEY` для реальных LLM-вызовов.
@@ -120,12 +127,16 @@ moon help
 
 ## VS Code / Cursor
 
+Расширение вынесено в отдельный репозиторий: [moon-vscode](https://github.com/nnxlxde-stack/moon-vscode).
+
 ```bash
-bun run vscode:package
-code --install-extension legacy/packages/vscode-moon/vscode-moon-0.2.2.vsix
+git clone https://github.com/nnxlxde-stack/moon-vscode.git
+cd moon-vscode
+bun install && bun run package
+code --install-extension vscode-moon-0.3.0.vsix
 ```
 
-Расширение даёт подсветку `*.moon` и `Moonfile`, LSP (completion, hover, go-to-definition, diagnostics), форматирование, preview промптов и команды **Moon: Build** / **Moon: Run**. Для Swift LSP укажите путь к `.build/debug/moon` в настройке `moon.languageServerPath` и используйте подкоманду `lsp`.
+После `swift build` в проекте Moon расширение автоматически подхватит `.build/debug/moon` как LSP.
 
 ## Структура репозитория
 
@@ -150,17 +161,14 @@ moon-lang/
 │   ├── MoonLSP/               # Language Server
 │   └── MoonCLI/               # moon executable
 ├── Tests/
+│   └── fixtures/              # golden-файлы и review-kit
 ├── Moonfile                   # Манифест примеров
 ├── examples/
 ├── stdlib/Core/
-├── registry/                  # Git-based package registry
-├── legacy/                    # TypeScript/Bun прототип (эталон)
-│   ├── packages/
-│   └── tests/golden/
 └── docs/
 ```
 
-### Ограничения Swift toolchain (Phase 9)
+### Ограничения (Phase 9)
 
 - Tokenizer: HuggingFace через `pip install tokenizers` + `paths.tokenizer` в Moonfile (иначе character estimate)
 - Registry: только `github.com`, vendor через `git clone`
@@ -169,28 +177,14 @@ moon-lang/
 
 | Ресурс | Описание |
 |--------|----------|
-| [**docs/index.html**](docs/index.html) | Полная интерактивная документация (откройте в браузере) |
+| [**docs/index.html**](docs/index.html) | Полная интерактивная документация |
 | [docs/grammar.ebnf](docs/grammar.ebnf) | EBNF-грамматика v0.3 |
 | [docs/model-pricing.json](docs/model-pricing.json) | Таблица цен моделей |
-
-Локальный просмотр:
-
-```bash
-# Windows
-start docs/index.html
-
-# macOS
-open docs/index.html
-
-# Linux
-xdg-open docs/index.html
-```
 
 ## Разработка
 
 ```bash
-swift build && swift test         # Swift toolchain (основной)
-bun run vscode:package            # VSIX (legacy/packages/vscode-moon, LSP → Swift moon)
+swift build && swift test
 ```
 
 ## Лицензия
