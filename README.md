@@ -2,7 +2,7 @@
 
 **Moon** — AI-native язык программирования для описания LLM-агентов, типизированных моделей данных и монадических пайплайнов. Синтаксис вдохновлён Haskell; конфигурация проекта — манифестом **Moonfile** в духе SwiftPM.
 
-**Toolchain:** `0.3.0-swift-phase5` · Swift 6.3+ · 33 теста
+**Toolchain:** `0.3.0-swift-phase6` · Swift 6.3+ · 42 теста
 
 <p align="center">
   <a href="docs/index.html"><strong>📖 Полная документация</strong></a>
@@ -99,7 +99,11 @@ models:
 | Команда | Описание |
 |---------|----------|
 | `moon check <file>` | Парсинг и проверка типов |
-| `moon run [--target NAME] [--mock]` | Запуск target или `.moon` файла (mock LLM) |
+| `moon run [--target NAME] [--mock\|--no-mock]` | Запуск target или `.moon` файла |
+| `moon run --metrics` | Запуск с отчётом токенов и стоимости |
+| `moon run --trace-llm` | Запуск с записью LLM-трейса |
+| `moon trace show` | Просмотр последнего LLM-трейса |
+| `moon trace diff <A> <B>` | Сравнение двух прогонов |
 | `moon build [--target NAME]` | Сборка из Moonfile → `.moon/build/` |
 | `moon plan <file>` | DAG выполнения |
 | `moon add <pkg[@ver]>` | Добавить git-зависимость и vendor |
@@ -109,7 +113,7 @@ models:
 | `moon lsp` | Language Server (stdio, Swift) |
 | `moon version` | Версии модулей toolchain |
 
-Команды `moon trace *` — только в legacy TypeScript CLI.
+`moon run --no-mock` требует `DEEPSEEK_API_KEY` для реальных LLM-вызовов.
 
 ```bash
 moon help
@@ -168,9 +172,9 @@ moon-lang/
 └── docs/
 ```
 
-### Ограничения Swift toolchain (Phase 5)
+### Ограничения Swift toolchain (Phase 6)
 
-- Runtime: только `--mock`, без storm и реальных LLM-вызовов; `mapM` последовательный
+- Runtime: DeepSeek client, storm, parallel `mapM`, metrics, trace; без `routesTo` delegate chain
 - LSP: нет Moonfile LSP, code actions, signature help, code lens
 - Registry: только `github.com`, vendor через `git clone`
 

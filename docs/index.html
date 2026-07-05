@@ -37,7 +37,7 @@
   <header class="moon-hero" id="intro">
     <div class="container">
       <div class="moon-hero-moon" aria-hidden="true"></div>
-      <span class="badge badge-moon mb-3">v0.3.0-swift-phase5 · AI-native · Haskell-inspired</span>
+      <span class="badge badge-moon mb-3">v0.3.0-swift-phase6 · AI-native · Haskell-inspired</span>
       <h1>The Moon Language</h1>
       <p class="lead col-lg-8 mx-auto mt-3">
         Язык для описания <strong>LLM-агентов</strong>, типизированных моделей данных,
@@ -651,13 +651,15 @@ runtime:
         <h2>CLI <code>moon</code></h2>
         <p>
           Основной исполняемый файл собирается из SwiftPM (<code>swift build</code>).
-          Версия toolchain: <code>0.3.0-swift-phase5</code>.
+          Версия toolchain: <code>0.3.0-swift-phase6</code>.
         </p>
         <table class="moon-table">
           <thead><tr><th>Команда</th><th>Описание</th></tr></thead>
           <tbody>
             <tr><td><code>moon check &lt;file&gt;</code></td><td>Парсинг и проверка типов</td></tr>
-            <tr><td><code>moon run</code></td><td>Запуск target из Moonfile или <code>.moon</code> файла (<code>--mock</code>, <code>--target</code>)</td></tr>
+            <tr><td><code>moon run</code></td><td>Запуск target из Moonfile или <code>.moon</code> (<code>--mock</code>, <code>--no-mock</code>, <code>--metrics</code>, <code>--trace-llm</code>)</td></tr>
+            <tr><td><code>moon trace show</code></td><td>Просмотр LLM-трейса (<code>--run &lt;id&gt;</code>)</td></tr>
+            <tr><td><code>moon trace diff</code></td><td>Сравнение двух прогонов</td></tr>
             <tr><td><code>moon build</code></td><td>Сборка targets в <code>.moon/build/</code> (<code>--target &lt;name&gt;</code>)</td></tr>
             <tr><td><code>moon plan &lt;file&gt;</code></td><td>DAG выполнения функции</td></tr>
             <tr><td><code>moon add &lt;pkg[@ver]&gt;</code></td><td>Добавить git-зависимость и vendor</td></tr>
@@ -669,8 +671,8 @@ runtime:
           </tbody>
         </table>
         <div class="moon-callout moon-callout-moon">
-          <strong>Legacy only:</strong> <code>moon trace show</code>, <code>moon trace diff</code>, <code>--metrics</code>,
-          storm и реальные LLM-вызовы — в TypeScript CLI под <code>legacy/</code>.
+          <strong>Phase 6:</strong> Swift runtime поддерживает DeepSeek client, storm, parallel <code>mapM</code>,
+          metrics и trace. Для <code>--no-mock</code> нужен <code>DEEPSEEK_API_KEY</code>.
         </div>
         <div class="moon-code-block">
           <div class="moon-code-header"><span class="moon-code-lang">shell</span><button class="moon-code-copy" type="button">Copy</button></div>
