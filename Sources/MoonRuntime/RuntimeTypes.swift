@@ -43,6 +43,8 @@ public final class RuntimeContext: @unchecked Sendable {
     public var memory: MemoryManager
     public var pool: WorkerPool
     public var metrics: MetricsCollector?
+    public var schemas: [String: JsonSchema]
+    public var systemSuffix: String?
 
     public init(
         program: Program,
@@ -53,7 +55,9 @@ public final class RuntimeContext: @unchecked Sendable {
         llm: LlmClient,
         memory: MemoryManager = MemoryManager(),
         pool: WorkerPool = WorkerPool(),
-        metrics: MetricsCollector? = nil
+        metrics: MetricsCollector? = nil,
+        schemas: [String: JsonSchema] = [:],
+        systemSuffix: String? = nil
     ) {
         self.program = program
         self.agents = agents
@@ -64,6 +68,8 @@ public final class RuntimeContext: @unchecked Sendable {
         self.memory = memory
         self.pool = pool
         self.metrics = metrics
+        self.schemas = schemas
+        self.systemSuffix = systemSuffix
     }
 
     public func childEnv(_ bindings: [String: RuntimeValue]) -> RuntimeContext {
@@ -78,7 +84,9 @@ public final class RuntimeContext: @unchecked Sendable {
             llm: llm,
             memory: memory,
             pool: pool,
-            metrics: metrics
+            metrics: metrics,
+            schemas: schemas,
+            systemSuffix: systemSuffix
         )
     }
 }

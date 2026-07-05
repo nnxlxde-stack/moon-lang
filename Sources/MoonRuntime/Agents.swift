@@ -28,9 +28,29 @@ public let analyzeOutputSchema = JsonSchema.object(
     required: ["findings", "summary", "confidence"]
 )
 
-public func schemaForAgent(_ agent: AgentDecl) -> JsonSchema {
+public func agentRole(_ agent: AgentDecl) -> String? {
+    for item in agent.config where item.key == "role" {
+        if case .lit(.string(let text, _), _) = item.value { return text }
+    }
+    return nil
+}
+
+public func agentFocus(_ agent: AgentDecl) -> [String]? {
+    for item in agent.config where item.key == "focus" {
+        if case .list(let elements, _) = item.value {
+            let values = elements.compactMap { el -> String? in
+                if case .lit(.string(let text, _), _) = el { return text }
+                return nil
+            }
+            return values.isEmpty ? nil : values
+        }
+    }
+    return nil
+}
+
+public func schemaForAgent(_ agent: AgentDecl, schemas: [String: JsonSchema] = [:]) -> JsonSchema {
     if case .con(let name, _, _) = agent.type, name == "Reviewer" {
-        return analyzeOutputSchema
+        return schemas["ReviewResult"] ?? analyzeOutputSchema
     }
     return analyzeOutputSchema
 }

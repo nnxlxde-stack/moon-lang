@@ -1,4 +1,5 @@
 import MoonAST
+import MoonPrompt
 
 func evalExpr(_ expr: Expression, _ ctx: RuntimeContext) async throws -> RuntimeValue {
     switch expr {
@@ -177,6 +178,9 @@ struct AgentAnalyzeOptions: Sendable {
     var stormRound: Int?
     var peerOutputs: [(agent: String, summary: String)]?
     var configOverride: [String: RuntimeValue]?
+    var delegateFrom: String?
+    var delegateChain: [String]?
+    var skipDelegate: Bool = false
 }
 
 func runAgentAnalyze(
@@ -192,26 +196,43 @@ func runAgentAnalyze(
 
     let model = agentModel(agent)
     let tier = modelToTier(model)
-    let schema = schemaForAgent(agent)
+    let schema = schemaForAgent(agent, schemas: ctx.schemas)
 
     var configValues = options.configOverride ?? [:]
+    for item in agent.config where item.key == "temperature" {
+        if case .lit(.float(let value, _), _) = item.value { configValues["temperature"] = .double(value) }
+        if case .lit(.int(let value, _), _) = item.value { configValues["temperature"] = .int(value) }
+    }
     for item in config {
         configValues[item.key] = try await evalExpr(item.value, ctx)
     }
 
-    let messages = assembleAgentMessages(
-        agent: agent,
-        agentName: agentName,
-        input: input,
-        config: configValues,
+    let delegateChain = options.delegateChain ?? [agentName]
+    var focus = agentFocus(agent)
+    if focus == nil, case .array(let items) = configValues["focus"] {
+        focus = items.compactMap { value -> String? in
+            if case .string(let text) = value { return text }
+            return nil
+        }
+    }
+
+    let assembled = assemblePrompt(AssemblyInput(
+        agent: agentName,
+        model: model,
+        systemPrompt: agentSystemPrompt(agent),
+        role: agentRole(agent),
+        focus: focus,
+        input: runtimeValueDescription(input),
+        config: runtimeConfigStrings(configValues),
+        systemSuffix: ctx.systemSuffix,
         peerOutputs: options.peerOutputs,
-        stormRound: options.stormRound
-    )
+        delegateFrom: options.delegateFrom
+    ))
 
-    let temperature = configDouble(configValues["temperature"]) ?? 0.25
-
+    let messages = assembled.messages.map { LlmChatMessage(role: $0.role, content: $0.content) }
     let requestConfig = configValues
-    return try await ctx.pool.run(tier) {
+
+    var result = try await ctx.pool.run(tier) {
         try await ctx.llm.complete(LlmRequest(
             agent: agentName,
             model: model,
@@ -219,42 +240,30 @@ func runAgentAnalyze(
             schema: schema,
             config: requestConfig,
             messages: messages,
-            temperature: temperature,
-            stormRound: options.stormRound
+            temperature: assembled.temperature,
+            stormRound: options.stormRound,
+            delegateChain: delegateChain
         ))
     }
+
+    if let delegateName = agent.routesTo, !options.skipDelegate {
+        var delegateConfig = configValues
+        delegateConfig["delegated_input"] = result
+        result = try await runAgentAnalyze(delegateName, input, config: config, ctx: ctx, options: AgentAnalyzeOptions(
+            stormRound: options.stormRound,
+            peerOutputs: options.peerOutputs,
+            configOverride: delegateConfig,
+            delegateFrom: agentName,
+            delegateChain: delegateChain + [delegateName],
+            skipDelegate: true
+        ))
+    }
+
+    return result
 }
 
-private func assembleAgentMessages(
-    agent: AgentDecl,
-    agentName: String,
-    input: RuntimeValue,
-    config: [String: RuntimeValue],
-    peerOutputs: [(agent: String, summary: String)]?,
-    stormRound: Int?
-) -> [LlmChatMessage] {
-    var system = agentSystemPrompt(agent)
-    if let round = stormRound {
-        system += "\n\nStorm round: \(round)"
-    }
-
-    var userParts: [String] = ["## Input", runtimeValueDescription(input)]
-    if let context = config["context"] {
-        userParts.append("## Project context")
-        userParts.append(runtimeValueDescription(context))
-    }
-    if let peers = peerOutputs, !peers.isEmpty {
-        userParts.append("## Peer perspectives")
-        for peer in peers {
-            userParts.append("### \(peer.agent)")
-            userParts.append(peer.summary)
-        }
-    }
-
-    return [
-        LlmChatMessage(role: "system", content: system),
-        LlmChatMessage(role: "user", content: userParts.joined(separator: "\n\n")),
-    ]
+private func runtimeConfigStrings(_ config: [String: RuntimeValue]) -> [String: String] {
+    config.mapValues(runtimeValueDescription)
 }
 
 func agentSystemPrompt(_ agent: AgentDecl) -> String {

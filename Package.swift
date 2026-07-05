@@ -74,6 +74,7 @@ let package = Package(
             "MoonRegistry",
             "MoonFormatter",
             "MoonLSP",
+            "MoonPrompt",
         ]),
     ]
 )

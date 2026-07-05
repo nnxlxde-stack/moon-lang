@@ -8,6 +8,7 @@ import MoonFormatter
 import MoonLSP
 import MoonMoonfile
 import MoonPlanner
+import MoonPrompt
 import MoonRegistry
 import MoonResolver
 import MoonRuntime
@@ -211,6 +212,80 @@ private let repoRoot: URL = {
     } else {
         Issue.record("Expected git dependency")
     }
+}
+
+@Test func assemblePromptIncludesDelegateBlock() {
+    let assembled = assemblePrompt(AssemblyInput(
+        agent: "Specialist",
+        model: "deepseek-v4-pro",
+        input: "payload",
+        config: ["delegated_input": "draft-result"],
+        delegateFrom: "Draft"
+    ))
+    let user = assembled.messages.first(where: { $0.role == "user" })?.content ?? ""
+    #expect(user.contains("Delegated from Draft"))
+}
+
+@Test func routesToDelegatesAnalyzeChain() async throws {
+    let src = """
+    import Core.Tools
+
+    agent Draft :: Analyzer Code routes_to Specialist
+      model: deepseek-v4-flash
+
+    agent Specialist :: Analyzer Code
+      model: deepseek-v4-pro
+
+    main :: IO ()
+    main = do
+      result <- Draft.analyze "payload"
+      pure $ result
+    """
+    let program = try MoonParser().parse(src)
+    let mock = MockLlmClient()
+    _ = try await runProgram(program, options: ProgramRunOptions(
+        overrides: RuntimeConfigOverrides(mock: true),
+        llm: mock
+    ))
+    #expect(mock.callCount == 2)
+}
+
+@Test func estimateTokensFromEnglishText() {
+    let pricing = loadPricingTable(path: repoRoot.appendingPathComponent("docs/model-pricing.json").path)
+    let count = estimateTokensFromText("hello world", model: "deepseek-v4-flash", pricing: pricing)
+    #expect(count > 0)
+}
+
+@Test func parseRootMoonfileRuntimeSections() throws {
+    let path = repoRoot.appendingPathComponent("Moonfile")
+    let source = try String(contentsOf: path, encoding: .utf8)
+    let mf = try MoonMoonfileParser().parse(source)
+    #expect(mf.package == "moon-lang-examples")
+    #expect(mf.models.defaultFlash == "deepseek-v4-flash")
+    #expect(mf.runtime.workerPool?.flashConcurrency == 20)
+    #expect(mf.runtime.memory?.longTermBackend == "file://.moon/memory")
+    #expect(mf.providers.deepseek?.apiKeyEnv == "DEEPSEEK_API_KEY")
+    #expect(mf.paths.pricing == "docs/model-pricing.json")
+    #expect(mf.prompts.storm?.defaultRounds == 1)
+}
+
+@Test func moonfileToRuntimeOverridesMapsSections() throws {
+    let path = repoRoot.appendingPathComponent("Moonfile")
+    let mf = try loadMoonfile(path: path.path)
+    let overrides = moonfileToRuntimeOverrides(mf)
+    #expect(overrides.memoryPath == "file://.moon/memory")
+    #expect(overrides.flashConcurrency == 20)
+    #expect(overrides.apiFormat == "anthropic")
+    #expect(overrides.pricingPath == "docs/model-pricing.json")
+}
+
+@Test func resolveMoonfileTargetNamed() throws {
+    let path = repoRoot.appendingPathComponent("Moonfile")
+    let mf = try loadMoonfile(path: path.path)
+    let projectRoot = path.deletingLastPathComponent().path
+    let target = try resolveMoonfileTarget(mf, projectRoot: projectRoot, target: "pr-triage")
+    #expect(target.name == "pr-triage")
+    #expect(target.path.hasSuffix("examples/pr-triage.moon"))
 }
 
 @Test func parseMoonfileGitDependency() throws {

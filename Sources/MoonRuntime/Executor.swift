@@ -1,4 +1,5 @@
 import MoonAST
+import MoonMoonfile
 import MoonPlanner
 
 func executeDag(_ dag: ExecutionDag, _ block: DoBlock, _ ctx: RuntimeContext) async throws {
@@ -145,7 +146,16 @@ public func runProgram(_ program: Program, options: ProgramRunOptions = ProgramR
         throw RuntimeError("Function body not found: \(functionName)")
     }
 
-    let runtimeConfig = loadRuntimeConfig(overrides: options.overrides)
+    var mergedOverrides = options.overrides
+    if let projectRoot = options.projectRoot,
+       let moonfilePath = findMoonfile(startDir: projectRoot),
+       let moonfile = try? loadMoonfile(path: moonfilePath) {
+        mergedOverrides = mergeRuntimeOverrides(
+            runtimeOverrides(from: moonfileToRuntimeOverrides(moonfile)),
+            mergedOverrides
+        )
+    }
+    let runtimeConfig = loadRuntimeConfig(overrides: mergedOverrides)
     let metrics = MetricsCollector(pricing: runtimeConfig.pricing)
 
     var llm: LlmClient = options.llm ?? createLlmClient(config: runtimeConfig, metrics: metrics)
@@ -167,7 +177,9 @@ public func runProgram(_ program: Program, options: ProgramRunOptions = ProgramR
         llm: llm,
         memory: MemoryManager(longTermPath: runtimeConfig.longTermMemoryPath, metrics: metrics),
         pool: pool,
-        metrics: metrics
+        metrics: metrics,
+        schemas: compiledSchemasForRuntime(program),
+        systemSuffix: runtimeConfig.systemSuffix
     )
 
     try await executeDag(dag, block, ctx)

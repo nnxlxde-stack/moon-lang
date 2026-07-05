@@ -65,7 +65,7 @@ public final class DeepSeekClient: LlmClient, @unchecked Sendable {
             } else {
                 let (payload, content) = try await callOpenAi(request, messages: messages, repairHint: repairHint)
                 raw = content
-                usage = usageFromOpenAi(payload, request: request, rawOutput: raw)
+                usage = usageFromOpenAi(payload, request: request, rawOutput: raw, pricing: config.pricing)
             }
 
             do {
@@ -249,8 +249,17 @@ func extractAnthropicContent(_ payload: [String: Any]) -> String {
         .trimmingCharacters(in: .whitespacesAndNewlines)
 }
 
-func usageFromOpenAi(_ payload: [String: Any], request: LlmRequest, rawOutput: String) -> TokenUsage {
+func usageFromOpenAi(_ payload: [String: Any], request: LlmRequest, rawOutput: String, pricing: PricingTable? = nil) -> TokenUsage {
     guard let usage = payload["usage"] as? [String: Any] else {
+        if let pricing {
+            let promptText = (request.messages ?? buildMessages(request)).map(\.content).joined()
+            return TokenUsage(
+                prompt: countTokens(promptText, model: request.model, pricing: pricing),
+                completion: countTokens(rawOutput, model: request.model, pricing: pricing),
+                cacheHit: 0,
+                cacheMiss: countTokens(promptText, model: request.model, pricing: pricing)
+            )
+        }
         return TokenUsage()
     }
     let cacheHit = usage["prompt_cache_hit_tokens"] as? Int ?? 0
