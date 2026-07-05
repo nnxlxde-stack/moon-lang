@@ -337,6 +337,13 @@ private let repoRoot: URL = {
     #expect(results[0].ok)
 }
 
+@Test func runtimeConfigUsesMockWithoutApiKey() {
+    let config = loadRuntimeConfig(overrides: RuntimeConfigOverrides(mock: nil, apiKey: nil))
+    #expect(config.useMock)
+    let client = createLlmClient(config: config)
+    #expect(client is MockLlmClient)
+}
+
 @Test func deepSeekApiResolvesAnthropicByDefault() {
     let api = resolveDeepSeekApi()
     #expect(api.format == .anthropic)
