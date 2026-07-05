@@ -83,17 +83,50 @@ public final class RuntimeContext: @unchecked Sendable {
     }
 }
 
+public struct LlmChatMessage: Sendable, Equatable {
+    public var role: String
+    public var content: String
+
+    public init(role: String, content: String) {
+        self.role = role
+        self.content = content
+    }
+}
+
 public struct LlmRequest: Sendable {
     public var agent: String
     public var model: String
     public var input: RuntimeValue
     public var schema: JsonSchema
+    public var config: [String: RuntimeValue]
+    public var systemPrompt: String?
+    public var messages: [LlmChatMessage]?
+    public var temperature: Double?
+    public var stormRound: Int?
+    public var delegateChain: [String]?
 
-    public init(agent: String, model: String, input: RuntimeValue, schema: JsonSchema) {
+    public init(
+        agent: String,
+        model: String,
+        input: RuntimeValue,
+        schema: JsonSchema,
+        config: [String: RuntimeValue] = [:],
+        systemPrompt: String? = nil,
+        messages: [LlmChatMessage]? = nil,
+        temperature: Double? = nil,
+        stormRound: Int? = nil,
+        delegateChain: [String]? = nil
+    ) {
         self.agent = agent
         self.model = model
         self.input = input
         self.schema = schema
+        self.config = config
+        self.systemPrompt = systemPrompt
+        self.messages = messages
+        self.temperature = temperature
+        self.stormRound = stormRound
+        self.delegateChain = delegateChain
     }
 }
 

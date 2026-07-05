@@ -337,6 +337,22 @@ private let repoRoot: URL = {
     #expect(results[0].ok)
 }
 
+@Test func deepSeekApiResolvesAnthropicByDefault() {
+    let api = resolveDeepSeekApi()
+    #expect(api.format == .anthropic)
+    #expect(api.endpoint == "/v1/messages")
+}
+
+@Test func toStrictJsonSchemaMarksRequiredFields() {
+    let schema = JsonSchema.object(
+        properties: ["summary": .string(), "confidence": .number(minimum: 0, maximum: 1)],
+        required: ["summary", "confidence"]
+    )
+    let dict = toStrictJsonSchema(schema) as? [String: Any]
+    #expect(dict?["type"] as? String == "object")
+    #expect((dict?["required"] as? [String])?.contains("summary") == true)
+}
+
 @Test func fileMemoryBackendPersistsAndRecalls() async throws {
     let dir = repoRoot.appendingPathComponent(".moon/mem-test-\(UUID().uuidString)").path
     defer { try? FileManager.default.removeItem(atPath: dir) }
