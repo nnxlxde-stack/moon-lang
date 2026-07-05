@@ -2,7 +2,7 @@
 
 **Moon** — AI-native язык программирования для описания LLM-агентов, типизированных моделей данных и монадических пайплайнов. Синтаксис вдохновлён Haskell; конфигурация проекта — манифестом **Moonfile** в духе SwiftPM.
 
-**Toolchain:** `0.3.0-swift-phase8` · Swift 6.3+ · 53 теста
+**Toolchain:** `0.3.0-swift-phase9` · Swift 6.3+ · 56 тестов
 
 <p align="center">
   <a href="docs/index.html"><strong>📖 Полная документация</strong></a>
@@ -160,10 +160,9 @@ moon-lang/
 └── docs/
 ```
 
-### Ограничения Swift toolchain (Phase 8)
+### Ограничения Swift toolchain (Phase 9)
 
 - Tokenizer: HuggingFace через `pip install tokenizers` + `paths.tokenizer` в Moonfile (иначе character estimate)
-- LSP: нет incremental sync и `moon-symbols.json` workspace index
 - Registry: только `github.com`, vendor через `git clone`
 
 ## Документация

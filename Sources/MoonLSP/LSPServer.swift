@@ -4,11 +4,12 @@ import MoonMoonfile
 import MoonParser
 
 public enum MoonLSPVersion {
-    public static let current = "0.4.0"
+    public static let current = "0.5.0"
 }
 
 public final class MoonLSPServer: @unchecked Sendable {
     private var documents: [String: String] = [:]
+    private let symbolDb = SymbolDatabase()
     private var running = true
 
     public init() {}
@@ -33,7 +34,7 @@ public final class MoonLSPServer: @unchecked Sendable {
             if id != nil {
                 respond(id: id, result: [
                     "capabilities": [
-                        "textDocumentSync": 1,
+                        "textDocumentSync": 2,
                         "completionProvider": [
                             "triggerCharacters": [".", ":", "/", "\\", "<", "-", "\""],
                             "resolveProvider": false,
@@ -59,16 +60,24 @@ public final class MoonLSPServer: @unchecked Sendable {
                let uri = textDocument["uri"] as? String,
                let text = textDocument["text"] as? String {
                 documents[uri] = text
+                refreshSymbolIndex(uri: uri)
                 publishDiagnostics(uri: uri, text: text)
             }
             return
         case "textDocument/didChange":
             if let textDocument = params["textDocument"] as? [String: Any],
                let uri = textDocument["uri"] as? String,
-               let changes = params["contentChanges"] as? [[String: Any]],
-               let change = changes.last,
-               let text = change["text"] as? String {
+               let changes = params["contentChanges"] as? [[String: Any]] {
+                var text = documents[uri] ?? ""
+                for change in changes {
+                    if change["range"] != nil {
+                        text = applyIncrementalChange(text, change: change)
+                    } else if let full = change["text"] as? String {
+                        text = full
+                    }
+                }
                 documents[uri] = text
+                refreshSymbolIndex(uri: uri)
                 publishDiagnostics(uri: uri, text: text)
             }
             return
@@ -111,14 +120,22 @@ public final class MoonLSPServer: @unchecked Sendable {
     }
 
     private func projectRoot(for path: String) -> String {
-        var dir = URL(fileURLWithPath: path).deletingLastPathComponent().standardizedFileURL
-        while true {
-            if findMoonfile(startDir: dir.path) != nil { return dir.path }
-            let parent = dir.deletingLastPathComponent()
-            if parent.path == dir.path { break }
-            dir = parent
+        findProjectRootFromPath(path)
+    }
+
+    private func ensureSymbolDb(filePath: String) {
+        let root = projectRoot(for: filePath)
+        if symbolDb.root == root, !symbolDb.symbols.isEmpty { return }
+        if !symbolDb.load(projectRoot: root) {
+            symbolDb.rebuild(projectRoot: root)
         }
-        return URL(fileURLWithPath: path).deletingLastPathComponent().path
+    }
+
+    private func refreshSymbolIndex(uri: String) {
+        let path = filePath(from: uri)
+        guard path.hasSuffix(".moon") else { return }
+        ensureSymbolDb(filePath: path)
+        symbolDb.refreshFile(path)
     }
 
     private func publishDiagnostics(uri: String, text: String) {
@@ -190,13 +207,14 @@ public final class MoonLSPServer: @unchecked Sendable {
         }
 
         guard let word = wordAtPosition(text, line: line, character: character),
-              let program = try? MoonParser().parse(text),
-              let info = lookupSymbol(program, entryPath: path, name: word, source: text) else {
+              let program = try? MoonParser().parse(text) else {
             return nil
         }
-        var md = "**\(info.name)**"
-        if let module = info.module { md += "\n\nModule: `\(module)`" }
-        md += "\n\n```moon\n\(info.type)\n```"
+        ensureSymbolDb(filePath: path)
+        guard let info = lookupSymbol(program, entryPath: path, name: word, db: symbolDb, source: text) else {
+            return nil
+        }
+        let md = formatHoverDocs(info.name, info.type, module: info.module, docs: info.docs)
         return ["contents": ["kind": "markdown", "value": md]]
     }
 
@@ -212,7 +230,8 @@ public final class MoonLSPServer: @unchecked Sendable {
             return nil
         }
         let path = filePath(from: uri)
-        guard let target = definitionLocation(program, entryPath: path, name: word, source: text) else {
+        ensureSymbolDb(filePath: path)
+        guard let target = definitionLocation(program, entryPath: path, name: word, db: symbolDb, source: text) else {
             return nil
         }
         return [

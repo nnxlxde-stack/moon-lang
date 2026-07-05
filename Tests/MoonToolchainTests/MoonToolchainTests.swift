@@ -391,6 +391,45 @@ private let repoRoot: URL = {
     #expect(diags.isEmpty)
 }
 
+@Test func symbolDatabaseWritesMoonSymbolsJson() throws {
+    let root = repoRoot.appendingPathComponent(".moon/symbol-db-test-\(UUID().uuidString)")
+    defer { try? FileManager.default.removeItem(at: root) }
+    try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+
+    let db = SymbolDatabase()
+    db.rebuild(projectRoot: root.path)
+
+    let dbPath = SymbolDatabase.dbPath(projectRoot: root.path)
+    #expect(FileManager.default.fileExists(atPath: dbPath))
+
+    let loaded = SymbolDatabase()
+    #expect(loaded.load(projectRoot: root.path))
+    #expect(!loaded.symbols.isEmpty)
+    #expect(loaded.symbols.contains { $0.module == "Core.GitHub" })
+}
+
+@Test func applyIncrementalChangeReplacesRange() {
+    let original = "line1\nline2\nline3"
+    let updated = applyIncrementalChange(original, change: [
+        "range": [
+            "start": ["line": 1, "character": 0],
+            "end": ["line": 1, "character": 5],
+        ],
+        "text": "REPLACED",
+    ])
+    #expect(updated.contains("REPLACED"))
+    #expect(!updated.contains("line2"))
+}
+
+@Test func extractMoonDocsFromComment() {
+    let src = """
+    --? Fetches open pull requests
+    fetchOpenPRs :: String -> IO [PullRequest]
+    """
+    let docs = extractMoonDocs(src, declLine: 2)
+    #expect(docs == "Fetches open pull requests")
+}
+
 @Test func moonfileLspDiagnosticsValid() throws {
     let path = repoRoot.appendingPathComponent("Moonfile")
     let src = try String(contentsOf: path, encoding: .utf8)
