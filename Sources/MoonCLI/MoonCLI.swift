@@ -21,6 +21,7 @@ enum MoonCommand: String {
     case publish
     case format
     case lsp
+    case trace
     case version
     case help
 }
@@ -78,6 +79,8 @@ struct MoonCLI {
             return try runFormat(args: args)
         case .lsp:
             return runLsp()
+        case .trace:
+            return try runTrace(args: args)
         }
     }
 
@@ -324,18 +327,37 @@ struct MoonCLI {
     }
 
     private static func runRun(args: [String]) async -> Int32 {
-        guard let file = args.first(where: { $0.hasSuffix(".moon") }) ?? args.first else {
-            fputs("Usage: moon run <file.moon> [--mock]\n", stderr)
+        let mock = args.contains("--mock") || !args.contains("--no-mock")
+        let metrics = args.contains("--metrics")
+        let traceLlm = args.contains("--trace-llm")
+        let target = flagValue(args, "--target")
+        let entryFn = flagValue(args, "--fn") ?? "main"
+
+        guard let entry = resolveRunEntry(args: args, target: target) else {
+            fputs("Usage: moon run [<file.moon> | --target NAME] [--mock] [--no-mock] [--metrics] [--trace-llm]\n", stderr)
             return 1
         }
 
-        let mock = args.contains("--mock") || !args.contains("--no-mock")
+        if case .failure(let message) = entry {
+            fputs("\(message)\n", stderr)
+            return 1
+        }
+        guard case .success(let resolved) = entry else { return 1 }
+
         do {
-            let source = try String(contentsOfFile: file, encoding: .utf8)
+            let source = try String(contentsOfFile: resolved.file, encoding: .utf8)
             let program = try MoonParser().parse(source)
-            let result = await MoonRuntime().run(program: program, options: RunOptions(mock: mock))
+            let result = await MoonRuntime().run(program: program, options: RunOptions(
+                mock: mock,
+                entryFunction: entryFn,
+                traceLlm: traceLlm,
+                showMetrics: metrics
+            ))
             if result.success {
                 print(result.message)
+                if let targetName = resolved.targetName {
+                    print("target: \(targetName)")
+                }
                 return 0
             }
             fputs("error: \(result.message)\n", stderr)
@@ -344,6 +366,83 @@ struct MoonCLI {
             fputs("moon: \(error)\n", stderr)
             return 1
         }
+    }
+
+    private enum RunEntryResult {
+        case success(file: String, projectRoot: String, targetName: String?)
+        case failure(String)
+    }
+
+    private static func resolveRunEntry(args: [String], target: String?) -> RunEntryResult? {
+        let positional = args.first(where: { !$0.hasPrefix("--") && $0 != "Moonfile" && $0 != "Moonfile.moon" })
+
+        if let file = positional, file.hasSuffix(".moon") {
+            let fileURL = URL(fileURLWithPath: file).standardizedFileURL
+            let projectRoot = findMoonfile(startDir: fileURL.deletingLastPathComponent().path)
+                .map { URL(fileURLWithPath: $0).deletingLastPathComponent().path }
+                ?? fileURL.deletingLastPathComponent().path
+            return .success(file: fileURL.path, projectRoot: projectRoot, targetName: target)
+        }
+
+        let cwd = FileManager.default.currentDirectoryPath
+        guard let moonfilePath = findMoonfile(startDir: cwd) else {
+            if let positional {
+                let path = URL(fileURLWithPath: positional).standardizedFileURL.path
+                if FileManager.default.fileExists(atPath: path) {
+                    return .success(file: path, projectRoot: cwd, targetName: nil)
+                }
+            }
+            return nil
+        }
+
+        let moonfile = try? loadMoonfile(path: moonfilePath)
+        let projectRoot = URL(fileURLWithPath: moonfilePath).deletingLastPathComponent().path
+
+        if let moonfile {
+            if let name = target ?? positional, let rel = moonfile.targets[name] {
+                let file = URL(fileURLWithPath: projectRoot).appendingPathComponent(rel).standardizedFileURL.path
+                return .success(file: file, projectRoot: projectRoot, targetName: name)
+            }
+            if let first = moonfile.targets.sorted(by: { $0.key < $1.key }).first {
+                let file = URL(fileURLWithPath: projectRoot).appendingPathComponent(first.value).standardizedFileURL.path
+                return .success(file: file, projectRoot: projectRoot, targetName: first.key)
+            }
+        }
+
+        return .failure("No runnable target found in Moonfile")
+    }
+
+    private static func runTrace(args: [String]) throws -> Int32 {
+        let sub = args.first(where: { !$0.hasPrefix("--") })
+        if sub == "show" {
+            let runId = flagValue(args, "--run")
+            let traceDir = flagValue(args, "--trace-dir")
+            let text = try runId.map { try showTraceRun($0, baseDir: traceDir) } ?? showLastTrace(baseDir: traceDir)
+            guard let text else {
+                fputs("No trace found. Run with: moon run <file> --trace-llm\n", stderr)
+                return 1
+            }
+            print(text)
+            return 0
+        }
+
+        if sub == "diff" {
+            let runA = flagValue(args, "--a") ?? args.dropFirst().first(where: { !$0.hasPrefix("--") && $0 != "diff" })
+            let runB = flagValue(args, "--b") ?? args.dropFirst().reversed().first(where: { !$0.hasPrefix("--") && $0 != "diff" })
+            guard let runA, let runB else {
+                fputs("Usage: moon trace diff <runA> <runB>\n", stderr)
+                return 1
+            }
+            guard let text = try diffTraceRuns(runA, runB, baseDir: flagValue(args, "--trace-dir")) else {
+                fputs("Trace runs not found.\n", stderr)
+                return 1
+            }
+            print(text)
+            return 0
+        }
+
+        fputs("Usage: moon trace show [--run <id>]  |  moon trace diff <runA> <runB>\n", stderr)
+        return 1
     }
 
     private static func flagValue(_ args: [String], _ flag: String) -> String? {
@@ -375,7 +474,8 @@ struct MoonCLI {
 
         Commands:
           check <file.moon>   Parse and typecheck
-          run [--mock]        Execute target or .moon file
+          run                 Execute target or .moon file [--mock|--no-mock] [--metrics] [--trace-llm]
+          trace show|diff     Inspect LLM trace runs
           build               Build Moonfile targets
           add <pkg[@ver]>     Add dependency and vendor
           vendor              Vendor git dependencies from Moonfile
@@ -394,5 +494,5 @@ struct MoonCLI {
 }
 
 enum MoonToolchainVersion {
-    static let current = "0.3.0-swift-phase5"
+    static let current = "0.3.0-swift-phase6"
 }
