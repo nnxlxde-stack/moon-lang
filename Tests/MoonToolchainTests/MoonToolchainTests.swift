@@ -337,6 +337,30 @@ private let repoRoot: URL = {
     #expect(results[0].ok)
 }
 
+@Test func fileMemoryBackendPersistsAndRecalls() async throws {
+    let dir = repoRoot.appendingPathComponent(".moon/mem-test-\(UUID().uuidString)").path
+    defer { try? FileManager.default.removeItem(atPath: dir) }
+
+    let backend = FileMemoryBackend(rootDir: dir)
+    try await backend.set("project-knowledge", "stored knowledge")
+
+    let pricing = loadPricingTable(path: repoRoot.appendingPathComponent("docs/model-pricing.json").path)
+    let metrics = MetricsCollector(pricing: pricing)
+    let memory = MemoryManager(longTermPath: dir, metrics: metrics)
+    memory.register(scope: "LongTerm", name: "project-knowledge")
+
+    if case .string(let first) = await memory.recall("project-knowledge") {
+        #expect(first == "stored knowledge")
+    } else {
+        Issue.record("Expected string recall")
+    }
+
+    _ = await memory.recall("project-knowledge")
+    let snap = metrics.snapshot()
+    #expect(snap.memory.recallHits == 1)
+    #expect(snap.memory.recallMisses == 1)
+}
+
 @Test func metricsCollectorTracksCost() {
     let pricing = loadPricingTable(path: repoRoot.appendingPathComponent("docs/model-pricing.json").path)
     let metrics = MetricsCollector(pricing: pricing)

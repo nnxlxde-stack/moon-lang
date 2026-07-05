@@ -40,7 +40,9 @@ public final class RuntimeContext: @unchecked Sendable {
     public var effects: [RuntimeEffect]
     public var builtins: Set<String>
     public var llm: LlmClient
-    public var memory: MemoryStore
+    public var memory: MemoryManager
+    public var pool: WorkerPool
+    public var metrics: MetricsCollector?
 
     public init(
         program: Program,
@@ -49,7 +51,9 @@ public final class RuntimeContext: @unchecked Sendable {
         effects: [RuntimeEffect] = [],
         builtins: Set<String>,
         llm: LlmClient,
-        memory: MemoryStore = MemoryStore()
+        memory: MemoryManager = MemoryManager(),
+        pool: WorkerPool = WorkerPool(),
+        metrics: MetricsCollector? = nil
     ) {
         self.program = program
         self.agents = agents
@@ -58,6 +62,8 @@ public final class RuntimeContext: @unchecked Sendable {
         self.builtins = builtins
         self.llm = llm
         self.memory = memory
+        self.pool = pool
+        self.metrics = metrics
     }
 
     public func childEnv(_ bindings: [String: RuntimeValue]) -> RuntimeContext {
@@ -70,27 +76,10 @@ public final class RuntimeContext: @unchecked Sendable {
             effects: effects,
             builtins: builtins,
             llm: llm,
-            memory: memory
+            memory: memory,
+            pool: pool,
+            metrics: metrics
         )
-    }
-}
-
-public final class MemoryStore: @unchecked Sendable {
-    private var scopes: [String: [String: String]] = [:]
-
-    public init() {}
-
-    public func register(scope: String, key: String) {
-        var bucket = scopes[scope, default: [:]]
-        bucket[key] = ""
-        scopes[scope] = bucket
-    }
-
-    public func recall(_ key: String) -> RuntimeValue {
-        for (_, bucket) in scopes {
-            if let value = bucket[key] { return .string(value) }
-        }
-        return .string("")
     }
 }
 

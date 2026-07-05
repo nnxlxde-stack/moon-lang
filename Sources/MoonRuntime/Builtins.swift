@@ -55,7 +55,7 @@ func runBuiltin(_ name: String, _ arg: RuntimeValue, _ ctx: RuntimeContext) asyn
             }
             return .callable(RuntimeCallableBox { key, ctx in
                 let keyName = scopeSymbolName(key) ?? runtimeValueDescription(key)
-                ctx.memory.register(scope: scopeName, key: keyName)
+                ctx.memory.register(scope: scopeName, name: keyName)
                 ctx.effects.append(RuntimeEffect(kind: "memory", detail: [
                     "scope": scopeName,
                     "key": keyName,
@@ -65,7 +65,7 @@ func runBuiltin(_ name: String, _ arg: RuntimeValue, _ ctx: RuntimeContext) asyn
         })
     case "recall":
         guard case .string(let key) = arg else { throw RuntimeError("recall expects string key") }
-        return ctx.memory.recall(key)
+        return await ctx.memory.recall(key)
     case "fetchOpenPRs":
         guard case .string(let repo) = arg else { throw RuntimeError("fetchOpenPRs expects repo string") }
         ctx.effects.append(RuntimeEffect(kind: "fetchOpenPRs", detail: ["repo": repo]))
