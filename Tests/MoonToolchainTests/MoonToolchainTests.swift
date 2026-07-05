@@ -337,6 +337,16 @@ private let repoRoot: URL = {
     #expect(results[0].ok)
 }
 
+@Test func workerPoolRunAllPreservesOrder() async throws {
+    let pool = WorkerPool(config: WorkerPoolConfig(flashConcurrency: 4, proConcurrency: 2))
+    let results = try await pool.runAll(.flash, (0..<5).map { index in
+        { index }
+    })
+    #expect(results == [0, 1, 2, 3, 4])
+    #expect(modelToTier("deepseek-v4-flash") == .flash)
+    #expect(modelToTier("deepseek-v4-pro") == .pro)
+}
+
 @Test func typecheckExamples() throws {
     for name in ["code-analyzer", "code-reviewer", "doc-summarizer", "pr-triage", "requirements-check"] {
         let examplePath = repoRoot.appendingPathComponent("examples/\(name).moon")
