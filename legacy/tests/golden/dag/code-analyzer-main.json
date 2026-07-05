@@ -1,0 +1,112 @@
+{
+  "functionName": "main",
+  "nodes": [
+    {
+      "id": "n0",
+      "kind": "action",
+      "label": "memory LongTerm \"project-knowledge\"",
+      "dependencies": [],
+      "stmtIndex": 0
+    },
+    {
+      "id": "n1",
+      "kind": "bind",
+      "label": "prs",
+      "dependencies": [],
+      "bindVar": "prs",
+      "stmtIndex": 1
+    },
+    {
+      "id": "n2",
+      "kind": "mapM",
+      "label": "codeReviews",
+      "dependencies": [
+        "n1"
+      ],
+      "bindVar": "codeReviews",
+      "mapMListVar": "prs",
+      "mapMFunc": "(analyze CodeAnalyzer)",
+      "stmtIndex": 2
+    },
+    {
+      "id": "n3",
+      "kind": "mapM_join",
+      "label": "n2_join",
+      "dependencies": [
+        "n2"
+      ],
+      "bindVar": "codeReviews",
+      "mapMListVar": "prs",
+      "stmtIndex": 2
+    },
+    {
+      "id": "n4",
+      "kind": "bind",
+      "label": "docs",
+      "dependencies": [],
+      "bindVar": "docs",
+      "stmtIndex": 3
+    },
+    {
+      "id": "n5",
+      "kind": "mapM",
+      "label": "docsReviews",
+      "dependencies": [
+        "n4"
+      ],
+      "bindVar": "docsReviews",
+      "mapMListVar": "docs",
+      "mapMFunc": "(analyze DocsAnalyzer)",
+      "stmtIndex": 4
+    },
+    {
+      "id": "n6",
+      "kind": "mapM_join",
+      "label": "n5_join",
+      "dependencies": [
+        "n5"
+      ],
+      "bindVar": "docsReviews",
+      "mapMListVar": "docs",
+      "stmtIndex": 4
+    },
+    {
+      "id": "n7",
+      "kind": "bind",
+      "label": "combinedReport",
+      "dependencies": [
+        "n3",
+        "n6"
+      ],
+      "bindVar": "combinedReport",
+      "stmtIndex": 5
+    },
+    {
+      "id": "n8",
+      "kind": "action",
+      "label": "saveToFile \"reports/weekly-analysis.md\" combinedReport",
+      "dependencies": [
+        "n7"
+      ],
+      "stmtIndex": 6
+    },
+    {
+      "id": "n9",
+      "kind": "action",
+      "label": "postToSlack combinedReport",
+      "dependencies": [
+        "n7"
+      ],
+      "stmtIndex": 7
+    },
+    {
+      "id": "n10",
+      "kind": "action",
+      "label": "Infix",
+      "dependencies": [
+        "n3"
+      ],
+      "stmtIndex": 8
+    }
+  ]
+}

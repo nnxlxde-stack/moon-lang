@@ -1,0 +1,4 @@
+{
+  "systemContains": ["Role:", "Focus on:"],
+  "userContains": ["## Input", "## Project context"]
+}

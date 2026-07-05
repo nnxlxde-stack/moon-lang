@@ -1,0 +1,1129 @@
+{
+  "declarations": [
+    {
+      "kind": "Import",
+      "path": [
+        "Core",
+        "GitHub"
+      ]
+    },
+    {
+      "kind": "Import",
+      "path": [
+        "Core",
+        "Memory"
+      ]
+    },
+    {
+      "kind": "Import",
+      "path": [
+        "Core",
+        "Tools"
+      ]
+    },
+    {
+      "kind": "Import",
+      "path": [
+        "Core",
+        "Analyzers"
+      ]
+    },
+    {
+      "kind": "Model",
+      "decl": {
+        "name": "ReviewResult",
+        "typeParams": [
+          "t"
+        ],
+        "fields": [
+          {
+            "name": "findings",
+            "type": {
+              "kind": "List",
+              "element": {
+                "kind": "Con",
+                "name": "Finding",
+                "args": [
+                  {
+                    "kind": "Var",
+                    "name": "t"
+                  }
+                ]
+              }
+            },
+            "modifiers": []
+          },
+          {
+            "name": "verdict",
+            "type": {
+              "kind": "Var",
+              "name": "Verdict"
+            },
+            "modifiers": []
+          },
+          {
+            "name": "summary",
+            "type": {
+              "kind": "Var",
+              "name": "String"
+            },
+            "modifiers": []
+          },
+          {
+            "name": "confidence",
+            "type": {
+              "kind": "Var",
+              "name": "Float"
+            },
+            "modifiers": [
+              {
+                "kind": "Constraint",
+                "expr": {
+                  "kind": "App",
+                  "func": {
+                    "kind": "App",
+                    "func": {
+                      "kind": "Var",
+                      "name": "between"
+                    },
+                    "arg": {
+                      "kind": "Lit",
+                      "value": {
+                        "kind": "Float",
+                        "value": 0
+                      }
+                    }
+                  },
+                  "arg": {
+                    "kind": "Lit",
+                    "value": {
+                      "kind": "Float",
+                      "value": 1
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "suggestions",
+            "type": {
+              "kind": "List",
+              "element": {
+                "kind": "Var",
+                "name": "Suggestion"
+              }
+            },
+            "modifiers": []
+          }
+        ]
+      }
+    },
+    {
+      "kind": "Data",
+      "decl": {
+        "name": "Verdict",
+        "typeParams": [],
+        "constructors": [
+          {
+            "name": "Approved"
+          },
+          {
+            "name": "ChangesRequested"
+          },
+          {
+            "name": "MajorRefactoring"
+          },
+          {
+            "name": "SecurityIssue"
+          }
+        ]
+      }
+    },
+    {
+      "kind": "Data",
+      "decl": {
+        "name": "Finding",
+        "typeParams": [
+          "a"
+        ],
+        "constructors": [
+          {
+            "name": "Finding",
+            "args": {
+              "kind": "Record",
+              "fields": [
+                {
+                  "name": "location",
+                  "type": {
+                    "kind": "Var",
+                    "name": "Location"
+                  }
+                },
+                {
+                  "name": "severity",
+                  "type": {
+                    "kind": "Var",
+                    "name": "Severity"
+                  }
+                },
+                {
+                  "name": "description",
+                  "type": {
+                    "kind": "Var",
+                    "name": "String"
+                  }
+                },
+                {
+                  "name": "category",
+                  "type": {
+                    "kind": "Con",
+                    "name": "Category",
+                    "args": [
+                      {
+                        "kind": "Var",
+                        "name": "a"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kind": "Agent",
+      "decl": {
+        "name": "GenericReviewer",
+        "typeParams": [
+          "t"
+        ],
+        "type": {
+          "kind": "Con",
+          "name": "Reviewer",
+          "args": [
+            {
+              "kind": "Var",
+              "name": "t"
+            }
+          ]
+        },
+        "config": [
+          {
+            "key": "model",
+            "value": {
+              "kind": "Var",
+              "name": "deepseek-v4-pro"
+            }
+          },
+          {
+            "key": "temperature",
+            "value": {
+              "kind": "Lit",
+              "value": {
+                "kind": "Float",
+                "value": 0.22
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kind": "Agent",
+      "decl": {
+        "name": "CodeReviewer",
+        "typeParams": [],
+        "type": {
+          "kind": "Con",
+          "name": "Reviewer",
+          "args": [
+            {
+              "kind": "Var",
+              "name": "Code"
+            }
+          ]
+        },
+        "config": [
+          {
+            "key": "model",
+            "value": {
+              "kind": "Var",
+              "name": "deepseek-v4-pro"
+            }
+          },
+          {
+            "key": "temperature",
+            "value": {
+              "kind": "Lit",
+              "value": {
+                "kind": "Float",
+                "value": 0.18
+              }
+            }
+          },
+          {
+            "key": "systemPrompt",
+            "value": {
+              "kind": "Lit",
+              "value": {
+                "kind": "String",
+                "value": "\r\n    Ты senior software engineer с 15-летним опытом. \r\n    Особое внимание уделяй архитектуре, безопасности, производительности \r\n    и чистоте кода.\r\n  "
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kind": "Agent",
+      "decl": {
+        "name": "PRReviewer",
+        "typeParams": [],
+        "type": {
+          "kind": "Con",
+          "name": "Reviewer",
+          "args": [
+            {
+              "kind": "Var",
+              "name": "PullRequest"
+            }
+          ]
+        },
+        "config": [
+          {
+            "key": "model",
+            "value": {
+              "kind": "Var",
+              "name": "deepseek-v4-pro"
+            }
+          },
+          {
+            "key": "focus",
+            "value": {
+              "kind": "List",
+              "elements": [
+                {
+                  "kind": "Lit",
+                  "value": {
+                    "kind": "String",
+                    "value": "security"
+                  }
+                },
+                {
+                  "kind": "Lit",
+                  "value": {
+                    "kind": "String",
+                    "value": "architecture"
+                  }
+                },
+                {
+                  "kind": "Lit",
+                  "value": {
+                    "kind": "String",
+                    "value": "maintainability"
+                  }
+                },
+                {
+                  "kind": "Lit",
+                  "value": {
+                    "kind": "String",
+                    "value": "testing"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kind": "Function",
+      "decl": {
+        "signature": {
+          "name": "main",
+          "type": {
+            "kind": "Con",
+            "name": "IO",
+            "args": [
+              {
+                "kind": "Tuple",
+                "elements": []
+              }
+            ]
+          }
+        },
+        "equations": [
+          {
+            "name": "main",
+            "patterns": [],
+            "body": {
+              "statements": [
+                {
+                  "kind": "Action",
+                  "expr": {
+                    "kind": "App",
+                    "func": {
+                      "kind": "App",
+                      "func": {
+                        "kind": "Var",
+                        "name": "memory"
+                      },
+                      "arg": {
+                        "kind": "Var",
+                        "name": "LongTerm"
+                      }
+                    },
+                    "arg": {
+                      "kind": "Lit",
+                      "value": {
+                        "kind": "String",
+                        "value": "project-knowledge"
+                      }
+                    }
+                  },
+                  "config": []
+                },
+                {
+                  "kind": "Bind",
+                  "pattern": {
+                    "kind": "PVar",
+                    "name": "openPRs"
+                  },
+                  "expr": {
+                    "kind": "App",
+                    "func": {
+                      "kind": "Var",
+                      "name": "fetchOpenPRs"
+                    },
+                    "arg": {
+                      "kind": "Lit",
+                      "value": {
+                        "kind": "String",
+                        "value": "org/repo"
+                      }
+                    }
+                  },
+                  "config": [
+                    {
+                      "key": "filter",
+                      "value": {
+                        "kind": "Paren",
+                        "expr": {
+                          "kind": "Infix",
+                          "op": ".",
+                          "left": {
+                            "kind": "Var",
+                            "name": "not"
+                          },
+                          "right": {
+                            "kind": "Var",
+                            "name": "isDraft"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "Bind",
+                  "pattern": {
+                    "kind": "PVar",
+                    "name": "results"
+                  },
+                  "expr": {
+                    "kind": "App",
+                    "func": {
+                      "kind": "App",
+                      "func": {
+                        "kind": "Var",
+                        "name": "mapM"
+                      },
+                      "arg": {
+                        "kind": "Var",
+                        "name": "reviewPullRequest"
+                      }
+                    },
+                    "arg": {
+                      "kind": "Var",
+                      "name": "openPRs"
+                    }
+                  },
+                  "config": []
+                },
+                {
+                  "kind": "Action",
+                  "expr": {
+                    "kind": "Infix",
+                    "op": ">>=",
+                    "left": {
+                      "kind": "App",
+                      "func": {
+                        "kind": "Var",
+                        "name": "generateReviewReport"
+                      },
+                      "arg": {
+                        "kind": "Var",
+                        "name": "results"
+                      }
+                    },
+                    "right": {
+                      "kind": "App",
+                      "func": {
+                        "kind": "Var",
+                        "name": "saveToFile"
+                      },
+                      "arg": {
+                        "kind": "Lit",
+                        "value": {
+                          "kind": "String",
+                          "value": "reviews/report.md"
+                        }
+                      }
+                    }
+                  },
+                  "config": []
+                },
+                {
+                  "kind": "Action",
+                  "expr": {
+                    "kind": "App",
+                    "func": {
+                      "kind": "Var",
+                      "name": "postSummaryToSlack"
+                    },
+                    "arg": {
+                      "kind": "Var",
+                      "name": "results"
+                    }
+                  },
+                  "config": []
+                },
+                {
+                  "kind": "Action",
+                  "expr": {
+                    "kind": "Infix",
+                    "op": "$",
+                    "left": {
+                      "kind": "App",
+                      "func": {
+                        "kind": "Var",
+                        "name": "when"
+                      },
+                      "arg": {
+                        "kind": "Paren",
+                        "expr": {
+                          "kind": "App",
+                          "func": {
+                            "kind": "Var",
+                            "name": "hasCriticalIssues"
+                          },
+                          "arg": {
+                            "kind": "Var",
+                            "name": "results"
+                          }
+                        }
+                      }
+                    },
+                    "right": {
+                      "kind": "App",
+                      "func": {
+                        "kind": "Var",
+                        "name": "notifyTeamLeads"
+                      },
+                      "arg": {
+                        "kind": "Var",
+                        "name": "results"
+                      }
+                    }
+                  },
+                  "config": []
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kind": "Function",
+      "decl": {
+        "signature": {
+          "name": "reviewPullRequest",
+          "type": {
+            "kind": "Arrow",
+            "from": {
+              "kind": "Var",
+              "name": "PullRequest"
+            },
+            "to": {
+              "kind": "Con",
+              "name": "IO",
+              "args": [
+                {
+                  "kind": "Con",
+                  "name": "ReviewResult",
+                  "args": [
+                    {
+                      "kind": "Var",
+                      "name": "PullRequest"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "equations": [
+          {
+            "name": "reviewPullRequest",
+            "patterns": [
+              {
+                "kind": "PVar",
+                "name": "pr"
+              }
+            ],
+            "body": {
+              "statements": [
+                {
+                  "kind": "Bind",
+                  "pattern": {
+                    "kind": "PVar",
+                    "name": "files"
+                  },
+                  "expr": {
+                    "kind": "App",
+                    "func": {
+                      "kind": "Var",
+                      "name": "fetchChangedFiles"
+                    },
+                    "arg": {
+                      "kind": "Var",
+                      "name": "pr"
+                    }
+                  },
+                  "config": []
+                },
+                {
+                  "kind": "Bind",
+                  "pattern": {
+                    "kind": "PVar",
+                    "name": "fileReviews"
+                  },
+                  "expr": {
+                    "kind": "App",
+                    "func": {
+                      "kind": "App",
+                      "func": {
+                        "kind": "Var",
+                        "name": "mapM"
+                      },
+                      "arg": {
+                        "kind": "Var",
+                        "name": "reviewFile"
+                      }
+                    },
+                    "arg": {
+                      "kind": "Var",
+                      "name": "files"
+                    }
+                  },
+                  "config": []
+                },
+                {
+                  "kind": "Bind",
+                  "pattern": {
+                    "kind": "PVar",
+                    "name": "combined"
+                  },
+                  "expr": {
+                    "kind": "App",
+                    "func": {
+                      "kind": "FieldAccess",
+                      "object": {
+                        "kind": "Var",
+                        "name": "CodeReviewer"
+                      },
+                      "field": "analyze"
+                    },
+                    "arg": {
+                      "kind": "Var",
+                      "name": "files"
+                    }
+                  },
+                  "config": [
+                    {
+                      "key": "context",
+                      "value": {
+                        "kind": "Paren",
+                        "expr": {
+                          "kind": "App",
+                          "func": {
+                            "kind": "Var",
+                            "name": "recall"
+                          },
+                          "arg": {
+                            "kind": "Lit",
+                            "value": {
+                              "kind": "String",
+                              "value": "project-knowledge"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "key": "maxTokens",
+                      "value": {
+                        "kind": "Lit",
+                        "value": {
+                          "kind": "Int",
+                          "value": 12000
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "Bind",
+                  "pattern": {
+                    "kind": "PVar",
+                    "name": "verdict"
+                  },
+                  "expr": {
+                    "kind": "App",
+                    "func": {
+                      "kind": "App",
+                      "func": {
+                        "kind": "Var",
+                        "name": "decideOverallVerdict"
+                      },
+                      "arg": {
+                        "kind": "Var",
+                        "name": "fileReviews"
+                      }
+                    },
+                    "arg": {
+                      "kind": "Var",
+                      "name": "combined"
+                    }
+                  },
+                  "config": []
+                },
+                {
+                  "kind": "Action",
+                  "expr": {
+                    "kind": "App",
+                    "func": {
+                      "kind": "Var",
+                      "name": "pure"
+                    },
+                    "arg": {
+                      "kind": "Record",
+                      "name": "ReviewResult",
+                      "fields": [
+                        {
+                          "name": "findings",
+                          "value": {
+                            "kind": "App",
+                            "func": {
+                              "kind": "Var",
+                              "name": "collectFindings"
+                            },
+                            "arg": {
+                              "kind": "Var",
+                              "name": "fileReviews"
+                            }
+                          }
+                        },
+                        {
+                          "name": "verdict",
+                          "value": {
+                            "kind": "Var",
+                            "name": "verdict"
+                          }
+                        },
+                        {
+                          "name": "summary",
+                          "value": {
+                            "kind": "App",
+                            "func": {
+                              "kind": "Var",
+                              "name": "generateSummary"
+                            },
+                            "arg": {
+                              "kind": "Var",
+                              "name": "combined"
+                            }
+                          }
+                        },
+                        {
+                          "name": "confidence",
+                          "value": {
+                            "kind": "App",
+                            "func": {
+                              "kind": "Var",
+                              "name": "calculateConfidence"
+                            },
+                            "arg": {
+                              "kind": "Var",
+                              "name": "fileReviews"
+                            }
+                          }
+                        },
+                        {
+                          "name": "suggestions",
+                          "value": {
+                            "kind": "App",
+                            "func": {
+                              "kind": "Var",
+                              "name": "extractSuggestions"
+                            },
+                            "arg": {
+                              "kind": "Var",
+                              "name": "combined"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "config": []
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kind": "Function",
+      "decl": {
+        "signature": {
+          "name": "reviewFile",
+          "type": {
+            "kind": "Arrow",
+            "from": {
+              "kind": "Var",
+              "name": "ChangedFile"
+            },
+            "to": {
+              "kind": "Con",
+              "name": "IO",
+              "args": [
+                {
+                  "kind": "Con",
+                  "name": "ReviewResult",
+                  "args": [
+                    {
+                      "kind": "Var",
+                      "name": "Code"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "equations": [
+          {
+            "name": "reviewFile",
+            "patterns": [
+              {
+                "kind": "PVar",
+                "name": "file"
+              }
+            ],
+            "body": {
+              "statements": [
+                {
+                  "kind": "Bind",
+                  "pattern": {
+                    "kind": "PVar",
+                    "name": "content"
+                  },
+                  "expr": {
+                    "kind": "App",
+                    "func": {
+                      "kind": "Var",
+                      "name": "readFile"
+                    },
+                    "arg": {
+                      "kind": "FieldAccess",
+                      "object": {
+                        "kind": "Var",
+                        "name": "file"
+                      },
+                      "field": "path"
+                    }
+                  },
+                  "config": []
+                },
+                {
+                  "kind": "Action",
+                  "expr": {
+                    "kind": "App",
+                    "func": {
+                      "kind": "FieldAccess",
+                      "object": {
+                        "kind": "Var",
+                        "name": "CodeReviewer"
+                      },
+                      "field": "analyze"
+                    },
+                    "arg": {
+                      "kind": "Var",
+                      "name": "content"
+                    }
+                  },
+                  "config": [
+                    {
+                      "key": "language",
+                      "value": {
+                        "kind": "Paren",
+                        "expr": {
+                          "kind": "App",
+                          "func": {
+                            "kind": "Var",
+                            "name": "detectLanguage"
+                          },
+                          "arg": {
+                            "kind": "Var",
+                            "name": "file"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "key": "previousVersion",
+                      "value": {
+                        "kind": "FieldAccess",
+                        "object": {
+                          "kind": "Var",
+                          "name": "file"
+                        },
+                        "field": "previousContent"
+                      }
+                    },
+                    {
+                      "key": "focus",
+                      "value": {
+                        "kind": "List",
+                        "elements": [
+                          {
+                            "kind": "Lit",
+                            "value": {
+                              "kind": "String",
+                              "value": "bugs"
+                            }
+                          },
+                          {
+                            "kind": "Lit",
+                            "value": {
+                              "kind": "String",
+                              "value": "performance"
+                            }
+                          },
+                          {
+                            "kind": "Lit",
+                            "value": {
+                              "kind": "String",
+                              "value": "security"
+                            }
+                          },
+                          {
+                            "kind": "Lit",
+                            "value": {
+                              "kind": "String",
+                              "value": "style"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kind": "Function",
+      "decl": {
+        "signature": {
+          "name": "deriveReviewer",
+          "type": {
+            "kind": "Arrow",
+            "from": {
+              "kind": "Var",
+              "name": "Entity"
+            },
+            "to": {
+              "kind": "Var",
+              "name": "Agent"
+            }
+          }
+        },
+        "equations": [
+          {
+            "name": "deriveReviewer",
+            "patterns": [
+              {
+                "kind": "PCon",
+                "name": "Documentation",
+                "args": []
+              }
+            ],
+            "body": {
+              "kind": "Agent",
+              "decl": {
+                "name": "DocsReviewer",
+                "typeParams": [],
+                "type": {
+                  "kind": "Con",
+                  "name": "Reviewer",
+                  "args": [
+                    {
+                      "kind": "Var",
+                      "name": "Documentation"
+                    }
+                  ]
+                },
+                "config": [
+                  {
+                    "key": "model",
+                    "value": {
+                      "kind": "Var",
+                      "name": "deepseek-v4-flash"
+                    }
+                  },
+                  {
+                    "key": "style",
+                    "value": {
+                      "kind": "Lit",
+                      "value": {
+                        "kind": "String",
+                        "value": "formal"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "deriveReviewer",
+            "patterns": [
+              {
+                "kind": "PCon",
+                "name": "Requirements",
+                "args": []
+              }
+            ],
+            "body": {
+              "kind": "Agent",
+              "decl": {
+                "name": "ReqReviewer",
+                "typeParams": [],
+                "type": {
+                  "kind": "Con",
+                  "name": "Reviewer",
+                  "args": [
+                    {
+                      "kind": "Var",
+                      "name": "Requirements"
+                    }
+                  ]
+                },
+                "config": [
+                  {
+                    "key": "model",
+                    "value": {
+                      "kind": "Var",
+                      "name": "deepseek-v4-pro"
+                    }
+                  },
+                  {
+                    "key": "focus",
+                    "value": {
+                      "kind": "List",
+                      "elements": [
+                        {
+                          "kind": "Lit",
+                          "value": {
+                            "kind": "String",
+                            "value": "consistency"
+                          }
+                        },
+                        {
+                          "kind": "Lit",
+                          "value": {
+                            "kind": "String",
+                            "value": "testability"
+                          }
+                        },
+                        {
+                          "kind": "Lit",
+                          "value": {
+                            "kind": "String",
+                            "value": "clarity"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kind": "Function",
+      "decl": {
+        "equations": [
+          {
+            "name": "autoReviewers",
+            "patterns": [],
+            "body": {
+              "kind": "App",
+              "func": {
+                "kind": "App",
+                "func": {
+                  "kind": "Var",
+                  "name": "map"
+                },
+                "arg": {
+                  "kind": "Var",
+                  "name": "deriveReviewer"
+                }
+              },
+              "arg": {
+                "kind": "List",
+                "elements": [
+                  {
+                    "kind": "Var",
+                    "name": "Code"
+                  },
+                  {
+                    "kind": "Var",
+                    "name": "Documentation"
+                  },
+                  {
+                    "kind": "Var",
+                    "name": "Requirements"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

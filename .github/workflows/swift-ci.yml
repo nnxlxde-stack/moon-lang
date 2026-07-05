@@ -1,0 +1,32 @@
+name: Swift CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  swift-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.3.3"
+      - name: Build
+        run: swift build -v
+      - name: Test
+        run: swift test -v
+
+  swift-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.3.3"
+      - name: Build
+        run: swift build -v
+      - name: Test
+        run: swift test -v

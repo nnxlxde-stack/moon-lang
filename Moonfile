@@ -1,0 +1,54 @@
+--? Moon project manifest (SwiftPM-style). Run `moon run` / `moon build` from this directory.
+package "moon-lang-examples"
+
+--? Core stdlib modules required by targets (import via `import Core.*` in .moon sources).
+dependencies:
+  Core.GitHub
+  Core.Memory
+  Core.Tools
+  Core.FS
+  Core.Network
+  Core.Analyzers
+
+--? Named runnable entrypoints. Values are project-relative paths to `.moon` files.
+targets:
+  analyzer: examples/code-analyzer.moon
+  reviewer: examples/code-reviewer.moon
+  doc-summarizer: examples/doc-summarizer.moon
+  pr-triage: examples/pr-triage.moon
+  requirements-check: examples/requirements-check.moon
+  storm: examples/code-review-storm.moon
+
+--? LLM provider credentials and wire format.
+providers:
+  deepseek:
+    --? API key via env("VAR") — literal sk-… keys are rejected by the parser.
+    api_key: env("DEEPSEEK_API_KEY")
+    --? Base URL or env("VAR"); defaults to DeepSeek anthropic endpoint.
+    base_url: env("DEEPSEEK_BASE_URL")
+    api_format: anthropic
+
+--? Project-relative asset paths.
+paths:
+  pricing: docs/model-pricing.json
+  tokenizer: deepseek-tokenizer/
+
+models:
+  default_flash: "deepseek-v4-flash"
+  default_pro: "deepseek-v4-pro"
+
+prompts:
+  default_system_suffix: "Always respond with valid JSON matching the schema."
+  trace_by_default: false
+  storm:
+    default_rounds: 1
+    max_panel_size: 5
+
+runtime:
+  worker_pool:
+    flash_concurrency: 20
+    pro_concurrency: 5
+  memory:
+    long_term_backend: "file://.moon/memory"
+  retries:
+    max_repair_attempts: 1

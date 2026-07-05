@@ -1,0 +1,8 @@
+node_modules/
+.build/
+.swiftpm/
+moon-symbols.json
+*.vsix
+.env
+.moon/
+legacy/tests/.trace-test/

@@ -1,0 +1,398 @@
+import Foundation
+import MoonAST
+import MoonLexer
+import MoonMoonfile
+import MoonParser
+import MoonBuild
+import MoonFormatter
+import MoonLSP
+import MoonPlanner
+import MoonRegistry
+import MoonRuntime
+import MoonTypechecker
+
+enum MoonCommand: String {
+    case check
+    case run
+    case build
+    case plan
+    case add
+    case vendor
+    case publish
+    case format
+    case lsp
+    case version
+    case help
+}
+
+@main
+struct MoonCLI {
+    static func main() async {
+        var args = Array(CommandLine.arguments.dropFirst())
+        if args.isEmpty {
+            printBanner()
+            printUsage()
+            exit(0)
+        }
+
+        let cmdName = args.removeFirst()
+        guard let command = MoonCommand(rawValue: cmdName) else {
+            fputs("Unknown command: \(cmdName)\n", stderr)
+            printUsage()
+            exit(1)
+        }
+
+        do {
+            let code = try await run(command: command, args: args)
+            exit(code)
+        } catch {
+            fputs("moon: \(error)\n", stderr)
+            exit(1)
+        }
+    }
+
+    private static func run(command: MoonCommand, args: [String]) async throws -> Int32 {
+        switch command {
+        case .version:
+            printVersion()
+            return 0
+        case .help:
+            printBanner()
+            printUsage()
+            return 0
+        case .check:
+            return try runCheck(args: args)
+        case .run:
+            return await runRun(args: args)
+        case .plan:
+            return try runPlan(args: args)
+        case .build:
+            return try runBuild(args: args)
+        case .add:
+            return try runAdd(args: args)
+        case .vendor:
+            return try runVendor(args: args)
+        case .publish:
+            return try runPublish(args: args)
+        case .format:
+            return try runFormat(args: args)
+        case .lsp:
+            return runLsp()
+        }
+    }
+
+    private static func runCheck(args: [String]) throws -> Int32 {
+        guard let file = args.first(where: { $0.hasSuffix(".moon") }) ?? args.first else {
+            fputs("Usage: moon check <file.moon>\n", stderr)
+            return 1
+        }
+
+        let source = try String(contentsOfFile: file, encoding: .utf8)
+        let parser = MoonParser()
+        let program = try parser.parse(source)
+        let fileURL = URL(fileURLWithPath: file).standardizedFileURL
+        let projectRoot = findMoonfile(startDir: fileURL.deletingLastPathComponent().path)
+            .map { URL(fileURLWithPath: $0).deletingLastPathComponent().path }
+            ?? fileURL.deletingLastPathComponent().path
+        let result = MoonTypechecker().check(
+            program,
+            options: TypecheckOptions(entryPath: fileURL.path, projectRoot: projectRoot)
+        )
+
+        if result.ok {
+            print("OK \(file) (\(program.declarations.count) declarations)")
+            return 0
+        }
+
+        for err in result.errors {
+            fputs("error: \(err)\n", stderr)
+        }
+        return 1
+    }
+
+    private static func runPlan(args: [String]) throws -> Int32 {
+        guard let file = args.first(where: { $0.hasSuffix(".moon") }) ?? args.first else {
+            fputs("Usage: moon plan <file.moon> [--fn <name>]\n", stderr)
+            return 1
+        }
+
+        let fn = flagValue(args, "--fn") ?? "main"
+        let source = try String(contentsOfFile: file, encoding: .utf8)
+        let parser = MoonParser()
+        let program = try parser.parse(source)
+        let fileURL = URL(fileURLWithPath: file).standardizedFileURL
+        let projectRoot = findMoonfile(startDir: fileURL.deletingLastPathComponent().path)
+            .map { URL(fileURLWithPath: $0).deletingLastPathComponent().path }
+            ?? fileURL.deletingLastPathComponent().path
+        let check = MoonTypechecker().check(
+            program,
+            options: TypecheckOptions(entryPath: fileURL.path, projectRoot: projectRoot)
+        )
+        if !check.ok {
+            for err in check.errors { fputs("error: \(err)\n", stderr) }
+            return 1
+        }
+
+        guard let dag = planFunction(program, functionName: fn) else {
+            fputs("Function not found: \(fn)\n", stderr)
+            return 1
+        }
+
+        print(try MoonPlannerExport.toJSON(dag))
+        return 0
+    }
+
+    private static func runBuild(args: [String]) throws -> Int32 {
+        let target = flagValue(args, "--target")
+        let entryFn = flagValue(args, "--fn") ?? "main"
+        let fileArg = args.first(where: { $0.hasSuffix(".moon") && $0 != "--target" && $0 != "--fn" })
+
+        if let file = fileArg {
+            let fileURL = URL(fileURLWithPath: file).standardizedFileURL
+            let projectRoot = findMoonfile(startDir: fileURL.deletingLastPathComponent().path)
+                .map { URL(fileURLWithPath: $0).deletingLastPathComponent().path }
+                ?? fileURL.deletingLastPathComponent().path
+            let targetName = target ?? fileURL.deletingPathExtension().lastPathComponent
+            let relSource = relativePath(from: projectRoot, to: fileURL.path)
+            let result = try buildSource(relSource, targetName: targetName, options: BuildOptions(
+                projectRoot: projectRoot,
+                entryFn: entryFn,
+                target: target
+            ))
+            return printBuildResult(result)
+        }
+
+        let cwd = FileManager.default.currentDirectoryPath
+        guard let moonfilePath = findMoonfile(startDir: cwd) else {
+            fputs("Moonfile not found. Run from project root or pass a .moon file.\n", stderr)
+            return 1
+        }
+
+        let projectRoot = URL(fileURLWithPath: moonfilePath).deletingLastPathComponent().path
+        let results = try buildFromMoonfile(moonfilePath, options: BuildOptions(
+            projectRoot: projectRoot,
+            entryFn: entryFn,
+            target: target
+        ))
+
+        var failed = 0
+        for result in results {
+            let code = printBuildResult(result, quiet: true)
+            if code != 0 { failed += 1 }
+        }
+
+        let okCount = results.count - failed
+        print("\n  \(okCount) targets  ·  \(results.flatMap(\.warnings).count) warnings")
+        return failed > 0 ? 1 : 0
+    }
+
+    private static func printBuildResult(_ result: BuildTargetResult, quiet: Bool = false) -> Int32 {
+        if result.ok {
+            if quiet {
+                print("built \(result.name) → \(result.outputDir)")
+            } else {
+                print("built \(result.name) → \(result.outputDir)")
+            }
+            for warning in result.warnings {
+                fputs("warning: [\(result.name)] \(warning)\n", stderr)
+            }
+            return 0
+        }
+
+        fputs("error: build failed for \(result.name)\n", stderr)
+        for err in result.errors {
+            fputs("  \(err)\n", stderr)
+        }
+        return 1
+    }
+
+    private static func relativePath(from root: String, to absolute: String) -> String {
+        let rootURL = URL(fileURLWithPath: root).standardizedFileURL
+        let absURL = URL(fileURLWithPath: absolute).standardizedFileURL
+        var rootComps = rootURL.pathComponents
+        var absComps = absURL.pathComponents
+        if rootComps.first == "/" && absComps.first != "/" { absComps.insert("/", at: 0) }
+        while !rootComps.isEmpty && !absComps.isEmpty && rootComps.first == absComps.first {
+            rootComps.removeFirst()
+            absComps.removeFirst()
+        }
+        let ups = Array(repeating: "..", count: rootComps.count)
+        let rel = (ups + absComps).joined(separator: "/")
+        return rel.isEmpty ? absURL.lastPathComponent : rel
+    }
+
+    private static func runAdd(args: [String]) throws -> Int32 {
+        guard let ref = args.first(where: { !$0.hasPrefix("--") }) else {
+            fputs("Usage: moon add <package[@version]>\n", stderr)
+            fputs("Example: moon add github.com/moon-lang/review-kit@0.1.0\n", stderr)
+            return 1
+        }
+
+        let cwd = FileManager.default.currentDirectoryPath
+        let fixture = ProcessInfo.processInfo.environment["MOON_VENDOR_FIXTURE"]
+        let result = try addDependency(
+            ref: ref,
+            projectRoot: cwd,
+            vendorOptions: VendorOptions(localFixtureRoot: fixture)
+        )
+
+        if result.addedToMoonfile {
+            print("added \(result.dependency.key) to Moonfile")
+        } else {
+            print("dependency \(result.dependency.key) already in Moonfile")
+        }
+
+        if let vendor = result.vendor {
+            print("vendored \(result.dependency.key) → \(vendor.destination) (\(vendor.action.rawValue))")
+        }
+        return 0
+    }
+
+    private static func runVendor(args: [String]) throws -> Int32 {
+        let cwd = FileManager.default.currentDirectoryPath
+        guard let moonfilePath = findMoonfile(startDir: cwd) else {
+            fputs("Moonfile not found\n", stderr)
+            return 1
+        }
+
+        let moonfile = try loadMoonfile(path: moonfilePath)
+        let projectRoot = URL(fileURLWithPath: moonfilePath).deletingLastPathComponent().path
+        let force = args.contains("--force")
+        let fixture = ProcessInfo.processInfo.environment["MOON_VENDOR_FIXTURE"]
+        let results = try vendorAll(
+            moonfile: moonfile,
+            projectRoot: projectRoot,
+            options: VendorOptions(localFixtureRoot: fixture, force: force)
+        )
+
+        if results.isEmpty {
+            print("no git dependencies to vendor")
+            return 0
+        }
+
+        for result in results {
+            print("vendored \(result.dependency.key) → \(result.destination) (\(result.action.rawValue))")
+        }
+        return 0
+    }
+
+    private static func runPublish(args: [String]) throws -> Int32 {
+        let cwd = FileManager.default.currentDirectoryPath
+        let createTag = !args.contains("--no-tag")
+        let version = MoonToolchainVersion.current
+        let result = try publishPackage(projectRoot: cwd, toolchainVersion: version, createTag: createTag)
+        print("package \(result.packageName) \(result.version)")
+        if result.createdTag {
+            print("created tag \(result.tag)")
+        } else if createTag {
+            print("tag \(result.tag) not created")
+        }
+        return 0
+    }
+
+    private static func runFormat(args: [String]) throws -> Int32 {
+        let write = args.contains("--write")
+        let check = args.contains("--check")
+        guard let file = args.first(where: { $0.hasSuffix(".moon") || $0 == "Moonfile" }) ?? args.first(where: { !$0.hasPrefix("--") }) else {
+            fputs("Usage: moon format <file> [--write] [--check]\n", stderr)
+            return 1
+        }
+
+        if check {
+            let source = try String(contentsOfFile: file, encoding: .utf8)
+            let formatted = formatSource(source)
+            if formatted != source {
+                fputs("would change \(file)\n", stderr)
+                return 1
+            }
+            print("OK \(file)")
+            return 0
+        }
+
+        let result = try formatFile(at: file, options: FormatOptions(write: write))
+        if write {
+            print(result.changed ? "formatted \(file)" : "unchanged \(file)")
+        } else {
+            print(result.output)
+        }
+        return 0
+    }
+
+    private static func runLsp() -> Int32 {
+        startLspServer()
+        return 0
+    }
+
+    private static func runRun(args: [String]) async -> Int32 {
+        guard let file = args.first(where: { $0.hasSuffix(".moon") }) ?? args.first else {
+            fputs("Usage: moon run <file.moon> [--mock]\n", stderr)
+            return 1
+        }
+
+        let mock = args.contains("--mock") || !args.contains("--no-mock")
+        do {
+            let source = try String(contentsOfFile: file, encoding: .utf8)
+            let program = try MoonParser().parse(source)
+            let result = await MoonRuntime().run(program: program, options: RunOptions(mock: mock))
+            if result.success {
+                print(result.message)
+                return 0
+            }
+            fputs("error: \(result.message)\n", stderr)
+            return 1
+        } catch {
+            fputs("moon: \(error)\n", stderr)
+            return 1
+        }
+    }
+
+    private static func flagValue(_ args: [String], _ flag: String) -> String? {
+        guard let index = args.firstIndex(of: flag), index + 1 < args.count else { return nil }
+        return args[index + 1]
+    }
+
+    private static func printBanner() {
+        print("moon \(MoonToolchainVersion.current) — Moon Language (Swift)")
+    }
+
+    private static func printVersion() {
+        print("moon toolchain \(MoonToolchainVersion.current)")
+        print("  MoonAST        \(MoonASTVersion.current)")
+        print("  MoonLexer      \(MoonLexerVersion.current)")
+        print("  MoonParser     \(MoonParserVersion.current)")
+        print("  MoonTypechecker \(MoonTypecheckerVersion.current)")
+        print("  MoonRuntime    \(MoonRuntimeVersion.current)")
+        print("  MoonRegistry   \(MoonRegistryVersion.current)")
+        print("  MoonFormatter  \(MoonFormatterVersion.current)")
+        print("  MoonLSP        \(MoonLSPVersion.current)")
+        print("  legacy TS/Bun  available under legacy/")
+    }
+
+    private static func printUsage() {
+        print("""
+        Usage:
+          moon <command> [options]
+
+        Commands:
+          check <file.moon>   Parse and typecheck
+          run [--mock]        Execute target or .moon file
+          build               Build Moonfile targets
+          add <pkg[@ver]>     Add dependency and vendor
+          vendor              Vendor git dependencies from Moonfile
+          publish             Validate package and create git tag
+          plan <file.moon>    Print execution DAG
+          format <file>       Format source [--write] [--check]
+          lsp                 Language Server (stdio)
+          version             Toolchain versions
+          help                Show this help
+
+        Legacy TypeScript toolchain:
+          bun run legacy:check
+          bun run legacy:run
+        """)
+    }
+}
+
+enum MoonToolchainVersion {
+    static let current = "0.3.0-swift-phase5"
+}

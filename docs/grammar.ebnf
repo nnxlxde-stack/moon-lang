@@ -1,0 +1,255 @@
+(* ===================================================== *)
+(* The Moon Language - EBNF Grammar (v0.3)                *)
+(* Пересмотрено по реальным примерам: code-analyzer.moon,  *)
+(* code-reviewer.moon                                      *)
+(* ===================================================== *)
+
+(* ==================== ПРАВИЛО ОТСТУПОВ (LAYOUT) ==================== *)
+(* Как в Haskell (offside rule). Ключевые слова "where" и "do" (а также
+   "with" — см. action_call) открывают layout-блок: колонка первого
+   токена после ключевого слова фиксирует отступ блока.
+     - Новая строка с ТЕМ ЖЕ отступом  = новый элемент блока
+       (неявная ";")
+     - Строка с БОЛЬШИМ отступом       = продолжение предыдущего
+       элемента
+     - Строка с МЕНЬШИМ отступом       = блок закрыт (неявная "}")
+   Явные "{ ; }" синтаксически допустимы как альтернатива (как в
+   Haskell), но в реальном коде используются только отступы.
+   Ниже все повторения "{ X }" / "X { X }" внутри тел do/where/with —
+   это такие layout-блоки, а не произвольные списки через пробел. *)
+
+(* ==================== ПРОГРАММА ==================== *)
+
+program ::= { declaration }
+(* "main" не является отдельной синтаксической формой — это обычный
+   function_decl с именем main :: IO (), как и любой другой. Требование
+   "программа должна содержать main" — семантическое, не грамматическое. *)
+
+declaration ::= import_stmt
+              | model_decl
+              | agent_decl
+              | data_decl
+              | instance_decl
+              | macro_decl
+              | function_decl
+
+import_stmt ::= "import" identifier { "." identifier } [ "as" identifier ]
+
+(* ==================== ОБЩИЕ ==================== *)
+
+(* Параметры типа — юкстапозиция, без скобок, как в Haskell:
+   model AnalysisResult t where ...
+   agent GenericAnalyzer t :: Analyzer t where ... *)
+template_params ::= type_var { type_var }
+
+(* Переменная типа — обычный identifier, по соглашению с маленькой
+   буквы (a, t, key), как в Haskell. Формально не отличается от
+   идентификатора типа на уровне грамматики — различие смысловое. *)
+type_var ::= identifier
+
+(* ==================== МОДЕЛИ ==================== *)
+
+model_decl ::= "model" identifier [ template_params ]
+               [ "implements" identifier ]
+               [ "where" ] { field_def }
+
+(* Без префикса "|>" — в реальном коде поля объявляются прямо:
+     item :: t
+     score :: Float   constraint: between 0.0 100.0 *)
+field_def ::= identifier "::" type_spec { field_modifier }
+
+field_modifier ::= "constraint:" expression
+                  | "default:" expression
+                  | "fetched from" source_spec
+                  | "optional"
+
+source_spec ::= identifier ":" identifier { "|" identifier ":" identifier }
+
+(* ==================== АГЕНТЫ ==================== *)
+
+agent_decl ::= "agent" identifier [ template_params ] "::" type_spec
+               [ "routes_to" identifier ]
+               [ "where" ] { config_item }
+(* "where" встречается в примерах не всегда (GenericAnalyzer — да,
+   CodeAnalyzer — нет) — трактуем как чисто косметическое слово,
+   не влияющее на структуру. agent_config как отдельный список
+   фиксированных ключей убран: в примерах встречаются произвольные
+   ключи (model, temperature, systemPrompt, focus, style, ...),
+   так что это просто { config_item }, как и в action_call. *)
+
+config_item ::= identifier ":" expression
+
+(* ==================== ДАННЫЕ ==================== *)
+
+data_decl ::= "data" identifier [ template_params ] "=" constructor { "|" constructor }
+
+constructor ::= identifier [ constructor_args ]
+
+constructor_args ::= "(" type_spec { "," type_spec } ")"
+                    | "{" record_field_type { "," record_field_type } "}"
+
+record_field_type ::= identifier "::" type_spec
+
+(* ==================== TYPE CLASSES ==================== *)
+
+instance_decl ::= "instance" identifier "for" type_spec [ template_params ]
+                   "where" { function_decl }
+
+(* ==================== МЕТАПРОГРАММИРОВАНИЕ ==================== *)
+
+(* derive/deriveReviewer как отдельная форма убраны: в примерах это
+   обычная функция (Entity -> Agent), реализованная через несколько
+   уравнений с pattern matching по конструктору, тело которых —
+   обычное agent_decl-выражение (см. primary_expr). Специальный
+   синтаксис для этого не нужен. *)
+
+macro_decl ::= "macro" identifier [ template_params ] [ parameters ] "=" do_block
+(* Не встречается в примерах — оставлено по спецификации презентации,
+   но не подтверждено реальным кодом. Возможно, тоже избыточно и
+   покрывается обычным function_decl. *)
+
+parameters ::= "(" [ param_def { "," param_def } ] ")"
+param_def  ::= identifier "::" type_spec
+
+(* ==================== ФУНКЦИИ ВЕРХНЕГО УРОВНЯ ==================== *)
+
+(* Сигнатура типа опциональна — "autoReviewers = map deriveReviewer [...]"
+   объявлена вообще без "::". Несколько уравнений подряд с разными
+   паттернами — pattern matching (как deriveReviewer Documentation = ...,
+   deriveReviewer Requirements = ...). *)
+function_decl ::= [ type_signature ] function_equation { function_equation }
+
+type_signature ::= identifier "::" type_spec
+
+function_equation ::= identifier { pattern } "=" ( expression | do_block )
+
+(* Одно правило и для переменных, и для (нульарных или применённых)
+   конструкторов — как и с type_var, различие по регистру первой буквы
+   смысловое, не грамматическое. *)
+pattern ::= identifier { pattern }
+          | literal
+          | "_"
+          | "(" pattern { "," pattern } ")"
+          | "[" [ pattern { "," pattern } ] "]"
+
+(* ==================== DO-БЛОКИ ==================== *)
+
+do_block ::= "do" do_statement { do_statement }
+
+(* Условные конструкции (when), циклы (forM_/mapM/forEach) и работа
+   с памятью (memory ...) в грамматике больше не выделены отдельно —
+   в примерах это обычные функции (when :: Bool -> IO () -> IO (),
+   mapM :: (a -> IO b) -> [a] -> IO [b], memory :: Scope -> String -> IO ()),
+   и полностью покрываются action_call / bind_stmt. *)
+do_statement ::= bind_stmt
+               | let_binding
+               | action_call
+
+bind_stmt   ::= pattern "<-" expression
+let_binding ::= "let" pattern "=" expression
+
+(* Действие = произвольное выражение, к которому может быть приписан
+   layout-блок конфигурации через "with". Формы вроде
+   "analyzer.analyze item with context: ... maxTokens: ..." и
+   "CodeReviewer.analyze files with context: ... maxTokens: ..."
+   покрываются этим правилом целиком через expression (application +
+   field access), без отдельных qualified_name/method-call веток. *)
+action_call ::= expression [ "with" config_item { config_item } ]
+
+(* ==================== ВЫРАЖЕНИЯ ==================== *)
+
+expression   ::= dollar_expr
+
+(* "$" — низкоприоритетное применение функции, право-ассоциативно:
+   pure $ AnalysisResult { ... }
+   when (cond) $ escalateCriticalIssues codeReviews *)
+dollar_expr  ::= bind_op_expr [ "$" dollar_expr ]
+
+(* ">>=" / ">>" — монадическая связка:
+   generateReviewReport results >>= saveToFile "reviews/report.md" *)
+bind_op_expr ::= or_expr { ( ">>=" | ">>" ) or_expr }
+
+or_expr      ::= and_expr { "||" and_expr }
+and_expr     ::= not_expr { "&&" not_expr }
+not_expr     ::= "not" not_expr
+               | compare_expr
+compare_expr ::= add_expr [ compare_op add_expr ]
+compare_op   ::= "==" | "/=" | "<=" | ">=" | "<" | ">"
+add_expr     ::= mul_expr { ( "+" | "-" ) mul_expr }
+mul_expr     ::= compose_expr { ( "*" | "/" ) compose_expr }
+
+(* Композиция функций: (not . isDraft). ВНИМАНИЕ: тот же символ "."
+   используется в postfix_expr для доступа к полю (file.path) —
+   различаются лексически по пробелам вокруг точки (как в Haskell):
+   "a.b" без пробелов = доступ к полю/квалифицированное имя,
+   "a . b" с пробелами с обеих сторон = композиция функций. Это
+   решение лексера, не грамматики. *)
+compose_expr ::= unary_expr { "." unary_expr }
+
+unary_expr   ::= "-" unary_expr
+               | app_expr
+
+app_expr     ::= postfix_expr { postfix_expr }
+
+postfix_expr ::= primary_expr { field_access }
+field_access ::= "." identifier   (* без пробелов вокруг "." — см. compose_expr *)
+
+primary_expr ::= literal
+               | identifier
+               | lambda_expr
+               | if_expr
+               | record_expr
+               | agent_decl
+               | model_decl
+               | "(" expression ")"
+               | "[" [ expression { "," expression } ] "]"
+               | do_block
+
+(* if — настоящая expression-конструкция (как в Haskell), else
+   обязателен. Ветки в примерах не встречались напрямую, но
+   "when (cond) $ action" уже покрыт как обычный вызов функции. *)
+if_expr ::= "if" expression "then" expression "else" expression
+
+lambda_expr ::= "\" identifier { identifier } "->" ( expression | do_block )
+
+(* Конструирование записи:
+   AnalysisResult { item = item, findings = result.findings, ... }
+   Порядок полей и стиль запятых (в начале строки или в конце) —
+   вопрос форматирования, не грамматики. *)
+record_expr  ::= identifier "{" record_field { "," record_field } "}"
+record_field ::= identifier "=" expression
+
+(* ==================== ТИПЫ ==================== *)
+
+type_spec ::= type_atom [ "->" type_spec ]
+
+(* basic_type как список зарезервированных слов убран: String, Int,
+   Bool, IO, Agent, Reviewer, Task и т.д. — обычные идентификаторы
+   типов из Core/Prelude, а не ключевые слова языка. *)
+type_atom ::= type_var
+            | identifier { type_atom }   (* применение типа: Maybe Int, Analyzer t *)
+            | "[" type_spec "]"
+            | "(" type_spec { "," type_spec } ")"
+
+(* ==================== ЛИТЕРАЛЫ И ТЕРМИНАЛЫ ==================== *)
+
+literal ::= string_literal | integer | float_literal | boolean
+
+string_literal ::= simple_string | multiline_string
+simple_string    ::= '"' { any_char_except_quote } '"'
+multiline_string ::= '"""' { any_char } '"""'   (* systemPrompt: """ ... """ *)
+
+integer       ::= digit { digit }
+float_literal ::= digit { digit } "." digit { digit }
+boolean       ::= "true" | "false"
+
+(* "-" разрешён внутри идентификатора без окружающих пробелов
+   (maximal munch), что покрывает имена вроде deepseek-v4-pro.
+   Как оператор вычитания "-" всегда отделяется пробелом хотя бы
+   с одной стороны — это тоже решение лексера, не грамматики. *)
+identifier ::= letter { letter | digit | "_" | "-" }
+
+comment ::= "--" { any_char_except_newline }
+
+letter ::= "a".."z" | "A".."Z"
+digit  ::= "0".."9"

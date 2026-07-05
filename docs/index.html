@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Полная документация по языку Moon и манифесту Moonfile — AI-native язык для агентов, анализаторов и LLM-пайплайнов.">
+  <title>Moon Language — Документация</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link rel="stylesheet" href="assets/moon.css">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg moon-navbar fixed-top">
+    <div class="container-fluid px-3 px-lg-4">
+      <a class="moon-brand navbar-brand" href="#intro">
+        <span class="moon-brand-icon" aria-hidden="true"></span>
+        Moon
+      </a>
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#moonNav" aria-label="Меню">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="moonNav">
+        <ul class="navbar-nav ms-auto gap-lg-1">
+          <li class="nav-item"><a class="nav-link" data-section="intro" href="#intro">Обзор</a></li>
+          <li class="nav-item"><a class="nav-link" data-section="quickstart" href="#quickstart">Старт</a></li>
+          <li class="nav-item"><a class="nav-link" data-section="language" href="#language">Язык</a></li>
+          <li class="nav-item"><a class="nav-link" data-section="moonfile" href="#moonfile">Moonfile</a></li>
+          <li class="nav-item"><a class="nav-link" data-section="stdlib" href="#stdlib">Stdlib</a></li>
+          <li class="nav-item"><a class="nav-link" data-section="toolchain" href="#toolchain">Инструменты</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <header class="moon-hero" id="intro">
+    <div class="container">
+      <div class="moon-hero-moon" aria-hidden="true"></div>
+      <span class="badge badge-moon mb-3">v0.3.0-swift-phase5 · AI-native · Haskell-inspired</span>
+      <h1>The Moon Language</h1>
+      <p class="lead col-lg-8 mx-auto mt-3">
+        Язык для описания <strong>LLM-агентов</strong>, типизированных моделей данных,
+        монадических пайплайнов и мульти-агентных дебатов — с манифестом проекта
+        <strong>Moonfile</strong> в духе SwiftPM.
+      </p>
+      <div class="moon-hero-actions d-flex flex-wrap gap-2 justify-content-center mt-4">
+        <a href="#quickstart" class="btn btn-moon-primary">Быстрый старт</a>
+        <a href="#language" class="btn btn-moon-outline">Справочник языка</a>
+        <a href="#moonfile" class="btn btn-moon-outline">Moonfile</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="moon-sidebar-overlay" id="moon-sidebar-overlay"></div>
+  <button class="moon-sidebar-toggle" id="moon-sidebar-toggle" aria-label="Содержание">☰</button>
+
+  <div class="moon-docs-layout container-fluid px-lg-4">
+
+    <!-- Sidebar TOC -->
+    <aside class="moon-sidebar" id="moon-sidebar">
+      <div class="moon-sidebar-search">
+        <input type="search" id="moon-search" placeholder="Поиск в содержании…" autocomplete="off">
+      </div>
+
+      <div class="moon-toc-group">
+        <div class="moon-toc-section">Начало</div>
+        <a class="moon-toc-link" href="#intro">Обзор</a>
+        <a class="moon-toc-link" href="#philosophy">Философия</a>
+        <a class="moon-toc-link" href="#architecture">Архитектура</a>
+        <a class="moon-toc-link" href="#quickstart">Быстрый старт</a>
+      </div>
+
+      <div class="moon-toc-group">
+        <div class="moon-toc-section">Язык Moon</div>
+        <a class="moon-toc-link" href="#language">Структура программы</a>
+        <a class="moon-toc-link" href="#comments">Комментарии</a>
+        <a class="moon-toc-link" href="#imports">Импорты</a>
+        <a class="moon-toc-link" href="#models">Модели</a>
+        <a class="moon-toc-link" href="#data">Типы данных</a>
+        <a class="moon-toc-link" href="#agents">Агенты</a>
+        <a class="moon-toc-link" href="#functions">Функции</a>
+        <a class="moon-toc-link" href="#do-blocks">Do-блоки</a>
+        <a class="moon-toc-link" href="#expressions">Выражения</a>
+        <a class="moon-toc-link" href="#types">Система типов</a>
+        <a class="moon-toc-link" href="#layout">Отступы (layout)</a>
+        <a class="moon-toc-link" href="#storm">Storm (дебаты)</a>
+        <a class="moon-toc-link" href="#examples">Примеры</a>
+      </div>
+
+      <div class="moon-toc-group">
+        <div class="moon-toc-section">Moonfile</div>
+        <a class="moon-toc-link" href="#moonfile">Обзор Moonfile</a>
+        <a class="moon-toc-link" href="#moonfile-sections">Секции</a>
+        <a class="moon-toc-link" href="#moonfile-env">Секреты и env()</a>
+        <a class="moon-toc-link" href="#moonfile-example">Полный пример</a>
+      </div>
+
+      <div class="moon-toc-group">
+        <div class="moon-toc-section">Стандартная библиотека</div>
+        <a class="moon-toc-link" href="#stdlib">Core.* модули</a>
+      </div>
+
+      <div class="moon-toc-group">
+        <div class="moon-toc-section">Инструменты</div>
+        <a class="moon-toc-link" href="#toolchain">CLI moon</a>
+        <a class="moon-toc-link" href="#vscode">VS Code / LSP</a>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="moon-content">
+
+      <!-- Philosophy -->
+      <section class="doc-section" id="philosophy">
+        <span class="section-label">Концепция</span>
+        <h2>Философия Moon</h2>
+        <p>
+          Moon — это язык <em>второго уровня</em> для оркестрации искусственного интеллекта.
+          Вместо того чтобы вшивать промпты в Python-скрипты, вы описываете
+          <strong>агентов</strong> с типами, <strong>модели</strong> с ограничениями,
+          и <strong>пайплайны</strong> в стиле Haskell (<code>do</code>, <code>&lt;-</code>, <code>pure</code>).
+        </p>
+        <div class="moon-feature-grid">
+          <div class="moon-feature">
+            <div class="moon-feature-icon">🤖</div>
+            <h4>Агенты как значения</h4>
+            <p class="mb-0 small text-muted">Декларативные LLM-агенты с <code>model</code>, <code>temperature</code>, <code>systemPrompt</code> и произвольными полями конфигурации.</p>
+          </div>
+          <div class="moon-feature">
+            <div class="moon-feature-icon">📐</div>
+            <h4>Типы и схемы</h4>
+            <p class="mb-0 small text-muted">Модели с полями, ограничениями (<code>constraint:</code>) и генерацией JSON-схем для валидации ответов LLM.</p>
+          </div>
+          <div class="moon-feature">
+            <div class="moon-feature-icon">🔗</div>
+            <h4>IO-пайплайны</h4>
+            <p class="mb-0 small text-muted">Монадические do-блоки связывают вызовы API, память, файлы и агентский анализ в единый поток.</p>
+          </div>
+          <div class="moon-feature">
+            <div class="moon-feature-icon">⛈️</div>
+            <h4>Storm</h4>
+            <p class="mb-0 small text-muted">Мульти-агентные панели обсуждают код, синтезатор объединяет вердикты — <code>storm</code> с <code>panel</code> и <code>rounds</code>.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Architecture -->
+      <section class="doc-section" id="architecture">
+        <span class="section-label">Архитектура</span>
+        <h2>Как устроен проект</h2>
+        <div class="moon-diagram">┌─────────────────────────────────────────────────────────────┐
+│                        Moonfile                              │
+│  package · dependencies · targets · providers · runtime      │
+└──────────────────────────┬──────────────────────────────────┘
+                           │ moon build / moon run
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                     *.moon исходники                         │
+│  import · model · agent · data · function · main             │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+          ┌────────────────┼────────────────┐
+          ▼                ▼                ▼
+    ┌──────────┐    ┌──────────┐    ┌──────────────┐
+    │  Parser  │───▶│Typecheck │───▶│   Planner    │
+    └──────────┘    └──────────┘    └──────┬───────┘
+                                            ▼
+                                    ┌──────────────┐
+                                    │   Runtime    │
+                                    │ LLM · Memory │
+                                    │  FS · HTTP   │
+                                    └──────────────┘</div>
+        <div class="moon-callout moon-callout-moon">
+          <strong>Moonfile</strong> отделён от каталога <code>.moon/</code> (артефакты сборки, память, трейсы).
+          CLI ищет файл <code>Moonfile</code>, затем устаревший <code>Moonfile.moon</code>.
+        </div>
+      </section>
+
+      <!-- Quickstart -->
+      <section class="doc-section" id="quickstart">
+        <span class="section-label">Старт</span>
+        <h2>Быстрый старт</h2>
+
+        <h3>Требования</h3>
+        <ul>
+          <li><strong>Swift 6.3+</strong> — основной toolchain (Windows, macOS, Linux)</li>
+          <li><a href="https://bun.sh" target="_blank" rel="noopener">Bun</a> 1.1+ — legacy TypeScript прототип и VS Code extension</li>
+          <li>Ключ <code>DEEPSEEK_API_KEY</code> — для реальных LLM-вызовов (пока только legacy runtime)</li>
+        </ul>
+
+        <h3>Swift toolchain</h3>
+        <div class="moon-code-block">
+          <div class="moon-code-header">
+            <span class="moon-code-lang">shell</span>
+            <button class="moon-code-copy" type="button">Copy</button>
+          </div>
+          <pre>git clone https://github.com/moon-lang/moon-lang.git
+cd moon-lang
+swift build
+swift test
+.build/debug/moon.exe version    # Windows
+.build/debug/moon version        # macOS/Linux
+
+moon check examples/code-analyzer.moon
+moon plan examples/code-analyzer.moon
+moon run --mock --target analyzer
+moon build
+moon format examples/pr-triage.moon --write</pre>
+        </div>
+
+        <h3>Legacy TypeScript (полный runtime)</h3>
+        <div class="moon-code-block">
+          <div class="moon-code-header">
+            <span class="moon-code-lang">shell</span>
+            <button class="moon-code-copy" type="button">Copy</button>
+          </div>
+          <pre>bun install
+bun run test:legacy
+
+bun run legacy:check examples/code-analyzer.moon
+bun run legacy:run -- --mock</pre>
+        </div>
+
+        <h3>Минимальная программа</h3>
+        <div class="moon-code-block">
+          <div class="moon-code-header">
+            <span class="moon-code-lang">moon</span>
+            <button class="moon-code-copy" type="button">Copy</button>
+          </div>
+          <pre><span class="syn-cmt">-- hello.moon</span>
+<span class="syn-kw">import</span> Core.Tools
+
+<span class="syn-fn">main</span> <span class="syn-op">::</span> <span class="syn-type">IO</span> ()
+<span class="syn-fn">main</span> <span class="syn-op">=</span> <span class="syn-kw">do</span>
+    content <span class="syn-op">&lt;-</span> readFile <span class="syn-str">"README.md"</span>
+    saveToFile <span class="syn-str">"out/summary.txt"</span> content</pre>
+        </div>
+      </section>
+
+      <!-- Language overview -->
+      <section class="doc-section" id="language">
+        <span class="section-label">Язык Moon</span>
+        <h2>Структура программы</h2>
+        <p>
+          Программа — последовательность <strong>деклараций</strong> верхнего уровня.
+          Точка входа — обычная функция <code>main :: IO ()</code>, как в Haskell.
+        </p>
+        <table class="moon-table">
+          <thead>
+            <tr><th>Декларация</th><th>Ключевые слова</th><th>Назначение</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Импорт</td><td><code>import</code></td><td>Подключение модулей <code>Core.*</code> и локальных <code>.moon</code></td></tr>
+            <tr><td>Модель</td><td><code>model … where</code></td><td>Типизированная схема данных / ответа LLM</td></tr>
+            <tr><td>Агент</td><td><code>agent … ::</code></td><td>Конфигурация LLM-агента с типовым классом</td></tr>
+            <tr><td>Данные</td><td><code>data … =</code></td><td>Алгебраические типы, записи, перечисления</td></tr>
+            <tr><td>Инстанс</td><td><code>instance … for … where</code></td><td>Реализация type class</td></tr>
+            <tr><td>Функция</td><td><code>name :: Type</code></td><td>Уравнения с pattern matching</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Comments -->
+      <section class="doc-section" id="comments">
+        <h2>Комментарии</h2>
+        <p>Однострочные комментарии начинаются с <code>--</code>. Документирующие — с <code>--?</code> (отображаются в hover LSP).</p>
+        <div class="moon-code-block">
+          <div class="moon-code-header"><span class="moon-code-lang">moon</span><button class="moon-code-copy" type="button">Copy</button></div>
+          <pre><span class="syn-cmt">-- обычный комментарий</span>
+<span class="syn-cmt">--? Документация для LSP hover</span>
+fetchOpenPRs <span class="syn-op">::</span> <span class="syn-type">String</span> <span class="syn-op">-></span> <span class="syn-type">IO</span> [<span class="syn-type">PullRequest</span>]</pre>
+        </div>
+      </section>
+
+      <!-- Imports -->
+      <section class="doc-section" id="imports">
+        <h2>Импорты</h2>
+        <div class="moon-code-block">
+          <div class="moon-code-header"><span class="moon-code-lang">moon</span><button class="moon-code-copy" type="button">Copy</button></div>
+          <pre><span class="syn-kw">import</span> Core.GitHub
+<span class="syn-kw">import</span> Core.Memory
+<span class="syn-kw">import</span> Core.Tools
+<span class="syn-kw">import</span> Core.Analyzers</pre>
+        </div>
+        <p>Модули stdlib объявляются в секции <code>dependencies:</code> файла Moonfile. Локальные модули резолвятся из <code>lib/</code>, <code>src/</code> или рядом с entry-файлом.</p>
+      </section>
+
+      <!-- Models -->
+      <section class="doc-section" id="models">
+        <h2>Модели (<code>model</code>)</h2>
+        <p>
+          Модель описывает структуру данных с полями, опциональными ограничениями и источниками.
+          Поддерживаются параметры типа (юкстапозиция, как в Haskell): <code>model AnalysisResult t where</code>.
+        </p>
+        <div class="moon-code-block">
+          <div class="moon-code-header"><span class="moon-code-lang">moon</span><button class="moon-code-copy" type="button">Copy</button></div>
+          <pre><span class="syn-kw">model</span> <span class="syn-type">AnalysisResult</span> t <span class="syn-kw">where</span>
+  item       <span class="syn-op">::</span> t
+  findings   <span class="syn-op">::</span> [<span class="syn-type">Finding</span> t]
+  score      <span class="syn-op">::</span> <span class="syn-type">Float</span>    <span class="syn-attr">constraint:</span> between <span class="syn-num">0.0</span> <span class="syn-num">100.0</span>
+  summary    <span class="syn-op">::</span> <span class="syn-type">String</span>
+  confidence <span class="syn-op">::</span> <span class="syn-type">Float</span>    <span class="syn-attr">constraint:</span> between <span class="syn-num">0.0</span> <span class="syn-num">1.0</span></pre>
+        </div>
+        <h4>Модификаторы полей</h4>
+        <table class="moon-table">
+          <thead><tr><th>Модификатор</th><th>Пример</th></tr></thead>
+          <tbody>
+            <tr><td><code>constraint:</code></td><td><code>constraint: between 0.0 1.0</code></td></tr>
+            <tr><td><code>default:</code></td><td><code>default: "normal"</code></td></tr>
+            <tr><td><code>optional</code></td><td>Поле может отсутствовать в ответе</td></tr>
+            <tr><td><code>fetched from</code></td><td>Внешний источник данных</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Data -->
+      <section class="doc-section" id="data">
+        <h2>Типы данных (<code>data</code>)</h2>
+        <div class="moon-code-block">
+          <div class="moon-code-header"><span class="moon-code-lang">moon</span><button class="moon-code-copy" type="button">Copy</button></div>
+          <pre><span class="syn-kw">data</span> <span class="syn-type">Verdict</span> <span class="syn-op">=</span> <span class="syn-type">Approved</span> <span class="syn-op">|</span> <span class="syn-type">ChangesRequested</span> <span class="syn-op">|</span> <span class="syn-type">SecurityIssue</span>
+
+<span class="syn-kw">data</span> <span class="syn-type">Finding</span> a <span class="syn-op">=</span> <span class="syn-type">Finding</span>
+  { location    <span class="syn-op">::</span> <span class="syn-type">Location</span>
+  , severity    <span class="syn-op">::</span> <span class="syn-type">Severity</span>
+  , description <span class="syn-op">::</span> <span class="syn-type">String</span>
+  , category    <span class="syn-op">::</span> <span class="syn-type">Category</span> a
+  }</pre>
+        </div>
+      </section>
+
+      <!-- Agents -->
+      <section class="doc-section" id="agents">
+        <h2>Агенты (<code>agent</code>)</h2>
+        <p>
+          Агент — конфигурация LLM с типовым классом (<code>Analyzer t</code>, <code>Reviewer t</code> и т.д.).
+          Слово <code>where</code> опционально. Поля конфигурации произвольны.
+        </p>
+        <div class="moon-code-block">
+          <div class="moon-code-header"><span class="moon-code-lang">moon</span><button class="moon-code-copy" type="button">Copy</button></div>
+          <pre><span class="syn-kw">agent</span> <span class="syn-type">CodeAnalyzer</span> <span class="syn-op">::</span> <span class="syn-type">Analyzer</span> <span class="syn-type">Code</span>
+  model: deepseek-v4-pro
+  temperature: <span class="syn-num">0.18</span>
+  systemPrompt: <span class="syn-str">"""
+    Ты эксперт по код-ревью с 15-летним опытом.
+    Ищи проблемы архитектуры, безопасности и производительности.
+  """</span></pre>
+        </div>
+        <h4>Вызов агента с контекстом (<code>with</code>)</h4>
+        <div class="moon-code-block">
+          <div class="moon-code-header"><span class="moon-code-lang">moon</span><button class="moon-code-copy" type="button">Copy</button></div>
+          <pre>result <span class="syn-op">&lt;-</span> <span class="syn-type">CodeAnalyzer</span>.analyze item
+    <span class="syn-kw">with</span> context: context
+         maxTokens: <span class="syn-num">10000</span>
+         previousVersion: (getPreviousVersion item)</pre>
+        </div>
+        <div class="moon-callout moon-callout-tip">
+          Блок <code>with</code> — layout-секция: пары <code>ключ: значение</code> на отдельных строках с отступом.
+        </div>
+      </section>
+
+      <!-- Functions -->
+      <section class="doc-section" id="functions">
+        <h2>Функции и pattern matching</h2>
+        <p>Сигнатура типа опциональна. Несколько уравнений — сопоставление с образцом.</p>
+        <div class="moon-code-block">
+          <div class="moon-code-header"><span class="moon-code-lang">moon</span><button class="moon-code-copy" type="button">Copy</button></div>
+          <pre><span class="syn-fn">analyze</span> <span class="syn-op">::</span> <span class="syn-type">Analyzer</span> t <span class="syn-op">-></span> t <span class="syn-op">-></span> <span class="syn-type">IO</span> (<span class="syn-type">AnalysisResult</span> t)
+<span class="syn-fn">analyze</span> analyzer item <span class="syn-op">=</span> <span class="syn-kw">do</span>
+    context <span class="syn-op">&lt;-</span> recall <span class="syn-str">"project-knowledge"</span>
+    result  <span class="syn-op">&lt;-</span> analyzer.analyze item
+        <span class="syn-kw">with</span> context: context
+    <span class="syn-fn">pure</span> <span class="syn-op">$</span> <span class="syn-type">AnalysisResult</span>
+        { item = item
+        , findings = result.findings
+        , score = calculateScore result
+        }</pre>
+        </div>
+      </section>
+
+      <!-- Do blocks -->
+      <section class="doc-section" id="do-blocks">
+        <h2>Do-блоки</h2>
+        <p>Монадическая нотация для <code>IO</code> и других монад:</p>
+        <table class="moon-table">
+          <thead><tr><th>Конструкция</th><th>Синтаксис</th></tr></thead>
+          <tbody>
+            <tr><td>Связывание</td><td><code>pattern &lt;- expression</code></td></tr>
+            <tr><td>Let</td><td><code>let pattern = expression</code></td></tr>
+            <tr><td>Действие</td><td><code>actionCall</code> или выражение с <code>with</code></td></tr>
+          </tbody>
+        </table>
+        <div class="moon-code-block">
+          <div class="moon-code-header"><span class="moon-code-lang">moon</span><button class="moon-code-copy" type="button">Copy</button></div>
+          <pre><span class="syn-fn">main</span> <span class="syn-op">::</span> <span class="syn-type">IO</span> ()
+<span class="syn-fn">main</span> <span class="syn-op">=</span> <span class="syn-kw">do</span>
+    memory <span class="syn-type">LongTerm</span> <span class="syn-str">"project-knowledge"</span>
+    prs <span class="syn-op">&lt;-</span> fetchOpenPRs <span class="syn-str">"org/repo"</span>
+        filter: (not . isDraft)
+    reviews <span class="syn-op">&lt;-</span> mapM (analyze <span class="syn-type">CodeAnalyzer</span>) prs
+    <span class="syn-kw">when</span> (hasCriticalFindings reviews) <span class="syn-op">$</span>
+        escalateCriticalIssues reviews</pre>
+        </div>
+      </section>
+
+      <!-- Expressions -->
+      <section class="doc-section" id="expressions">
+        <h2>Выражения</h2>
+        <table class="moon-table">
+          <thead><tr><th>Конструкция</th><th>Синтаксис</th><th>Примечание</th></tr></thead>
+          <tbody>
+            <tr><td>Применение <code>$</code></td><td><code>f $ arg</code></td><td>Низкий приоритет, право-ассоциативно</td></tr>
+            <tr><td>Bind</td><td><code>x &gt;&gt;= f</code></td><td>Монадическая композиция</td></tr>
+            <tr><td>Композиция</td><td><code>f . g</code></td><td>Пробелы вокруг <code>.</code> обязательны</td></tr>
+            <tr><td>Поле</td><td><code>record.field</code></td><td>Без пробелов вокруг <code>.</code></td></tr>
+            <tr><td>Запись</td><td><code>Type { f = v, … }</code></td><td>Record syntax</td></tr>
+            <tr><td>Лямбда</td><td><code>\x -> …</code></td><td>Как в Haskell</td></tr>
+            <tr><td>If</td><td><code>if … then … else …</code></td><td><code>else</code> обязателен</td></tr>
+            <tr><td>Списки</td><td><code>[a, b, c]</code></td><td>Гомогенные списки</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Types -->
+      <section class="doc-section" id="types">
+        <h2>Система типов</h2>
+        <p>Типы записываются через <code>-&gt;</code> (право-ассоциативно). Базовые типы — обычные идентификаторы из прелюдии, не зарезервированные слова.</p>
+        <div class="moon-code-block">
+          <div class="moon-code-header"><span class="moon-code-lang">moon</span><button class="moon-code-copy" type="button">Copy</button></div>
+          <pre><span class="syn-type">String</span>  <span class="syn-type">Int</span>  <span class="syn-type">Float</span>  <span class="syn-type">Bool</span>
+<span class="syn-type">IO</span> a                    <span class="syn-cmt">-- монадические вычисления</span>
+<span class="syn-type">Analyzer</span> t               <span class="syn-cmt">-- type class агента</span>
+[<span class="syn-type">PullRequest</span>]              <span class="syn-cmt">-- список</span>
+<span class="syn-type">Maybe</span> <span class="syn-type">Int</span>                 <span class="syn-cmt">-- применение типа</span>
+a <span class="syn-op">-></span> b <span class="syn-op">-></span> c               <span class="syn-cmt">-- = a -> (b -> c)</span></pre>
+        </div>
+      </section>
+
+      <!-- Layout -->
+      <section class="doc-section" id="layout">
+        <h2>Правило отступов (layout)</h2>
+        <p>Как в Haskell: ключевые слова <code>where</code>, <code>do</code>, <code>with</code> открывают блок по колонке первого токена.</p>
+        <ul>
+          <li>Та же колонка — новый элемент (неявная <code>;</code>)</li>
+          <li>Больший отступ — продолжение предыдущего элемента</li>
+          <li>Меньший отступ — блок закрыт</li>
+        </ul>
+        <div class="moon-callout moon-callout-info">
+          Явные <code>{ }</code> допустимы, но в реальном коде Moon используются только отступы.
+        </div>
+      </section>
+
+      <!-- Storm -->
+      <section class="doc-section" id="storm">
+        <h2>Storm — мульти-агентные дебаты</h2>
+        <p>
+          Привязка <code>storm</code> запускает панель агентов, которые обсуждают артефакт
+          (файл, путь), а <code>synthesizer</code> формирует итоговый консенсус.
+        </p>
+        <div class="moon-code-block">
+          <div class="moon-code-header"><span class="moon-code-lang">moon</span><button class="moon-code-copy" type="button">Copy</button></div>
+          <pre>consensus <span class="syn-op">&lt;-</span> storm <span class="syn-str">"src/main.cpp"</span>
+    <span class="syn-kw">with</span> panel: [<span class="syn-type">SecurityReviewer</span>, <span class="syn-type">ArchitectReviewer</span>]
+         synthesizer: <span class="syn-type">LeadSynthesizer</span>
+         rounds: <span class="syn-num">2</span></pre>
+        </div>
+        <p>Параметры по умолчанию задаются в Moonfile: <code>prompts.storm.default_rounds</code>, <code>prompts.storm.max_panel_size</code>.</p>
+      </section>
+
+      <!-- Examples -->
+      <section class="doc-section" id="examples">
+        <h2>Примеры в репозитории</h2>
+        <table class="moon-table">
+          <thead><tr><th>Файл</th><th>Описание</th></tr></thead>
+          <tbody>
+            <tr><td><code>examples/code-analyzer.moon</code></td><td>Универсальный анализатор с шаблонами и специализациями</td></tr>
+            <tr><td><code>examples/code-reviewer.moon</code></td><td>Код-ревью PR с вердиктами и отчётами</td></tr>
+            <tr><td><code>examples/pr-triage.moon</code></td><td>Быстрый triage открытых PR</td></tr>
+            <tr><td><code>examples/doc-summarizer.moon</code></td><td>Суммаризация документации</td></tr>
+            <tr><td><code>examples/requirements-check.moon</code></td><td>Проверка требований</td></tr>
+            <tr><td><code>examples/code-review-storm.moon</code></td><td>Storm-дебаты панели ревьюеров</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Moonfile -->
+      <section class="doc-section" id="moonfile">
+        <span class="section-label">Moonfile</span>
+        <h2>Манифест проекта Moonfile</h2>
+        <p>
+          <strong>Moonfile</strong> — декларативный манифест в стиле SwiftPM.
+          Определяет зависимости stdlib, runnable targets, LLM-провайдеров, модели по умолчанию и runtime.
+        </p>
+        <div class="moon-callout moon-callout-warn">
+          Файл называется <code>Moonfile</code> (без расширения). Расширение <code>.moon</code> зарезервировано для исходного кода.
+        </div>
+      </section>
+
+      <section class="doc-section" id="moonfile-sections">
+        <h2>Секции Moonfile</h2>
+        <table class="moon-table">
+          <thead><tr><th>Секция</th><th>Назначение</th></tr></thead>
+          <tbody>
+            <tr><td><code>package "name"</code></td><td>Уникальное имя пакета (обязательно)</td></tr>
+            <tr><td><code>dependencies:</code></td><td>Список модулей <code>Core.*</code></td></tr>
+            <tr><td><code>targets:</code></td><td>Именованные entrypoints → путь к <code>.moon</code></td></tr>
+            <tr><td><code>providers:</code></td><td>LLM-провайдеры (<code>deepseek</code>)</td></tr>
+            <tr><td><code>paths:</code></td><td>Пути к pricing, tokenizer</td></tr>
+            <tr><td><code>models:</code></td><td><code>default_flash</code>, <code>default_pro</code></td></tr>
+            <tr><td><code>prompts:</code></td><td>Суффиксы, trace, настройки storm</td></tr>
+            <tr><td><code>runtime:</code></td><td>Пул воркеров, память, ретраи</td></tr>
+          </tbody>
+        </table>
+
+        <h3>providers.deepseek</h3>
+        <table class="moon-table">
+          <thead><tr><th>Ключ</th><th>Описание</th></tr></thead>
+          <tbody>
+            <tr><td><code>api_key</code></td><td><code>env("DEEPSEEK_API_KEY")</code> — литералы <code>sk-…</code> запрещены</td></tr>
+            <tr><td><code>base_url</code></td><td>URL или <code>env("DEEPSEEK_BASE_URL")</code></td></tr>
+            <tr><td><code>api_format</code></td><td><code>anthropic</code> (по умолчанию) или <code>openai</code></td></tr>
+            <tr><td><code>use_beta</code></td><td>Beta OpenAI-совместимый API DeepSeek</td></tr>
+          </tbody>
+        </table>
+
+        <h3>runtime</h3>
+        <table class="moon-table">
+          <thead><tr><th>Ключ</th><th>Описание</th></tr></thead>
+          <tbody>
+            <tr><td><code>worker_pool.flash_concurrency</code></td><td>Параллельные flash-вызовы (по умолчанию 20)</td></tr>
+            <tr><td><code>worker_pool.pro_concurrency</code></td><td>Параллельные pro-вызовы (по умолчанию 5)</td></tr>
+            <tr><td><code>memory.long_term_backend</code></td><td>URI памяти, напр. <code>file://.moon/memory</code></td></tr>
+            <tr><td><code>retries.max_repair_attempts</code></td><td>Попытки починки JSON после валидации схемы</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="doc-section" id="moonfile-env">
+        <h2>Секреты и <code>env()</code></h2>
+        <p>
+          Moonfile намеренно не хранит секреты в открытом виде. Для ключей API используйте:
+        </p>
+        <div class="moon-code-block">
+          <div class="moon-code-header"><span class="moon-code-lang">moonfile</span><button class="moon-code-copy" type="button">Copy</button></div>
+          <pre>providers:
+  deepseek:
+    api_key: env("DEEPSEEK_API_KEY")
+    base_url: env("DEEPSEEK_BASE_URL")
+    api_format: anthropic</pre>
+        </div>
+        <p>Комментарии: <code>--</code> и <code>--?</code> (документация для LSP hover в редакторе).</p>
+      </section>
+
+      <section class="doc-section" id="moonfile-example">
+        <h2>Полный пример Moonfile</h2>
+        <div class="moon-code-block">
+          <div class="moon-code-header"><span class="moon-code-lang">moonfile</span><button class="moon-code-copy" type="button">Copy</button></div>
+          <pre><span class="syn-cmt">--? Moon project manifest (SwiftPM-style).</span>
+package "moon-lang-examples"
+
+dependencies:
+  Core.GitHub
+  Core.Memory
+  Core.Tools
+  Core.FS
+  Core.Network
+  Core.Analyzers
+
+targets:
+  analyzer: examples/code-analyzer.moon
+  reviewer: examples/code-reviewer.moon
+  storm: examples/code-review-storm.moon
+
+providers:
+  deepseek:
+    api_key: env("DEEPSEEK_API_KEY")
+    base_url: env("DEEPSEEK_BASE_URL")
+    api_format: anthropic
+
+paths:
+  pricing: docs/model-pricing.json
+  tokenizer: deepseek-tokenizer/
+
+models:
+  default_flash: "deepseek-v4-flash"
+  default_pro: "deepseek-v4-pro"
+
+prompts:
+  default_system_suffix: "Always respond with valid JSON matching the schema."
+  trace_by_default: false
+  storm:
+    default_rounds: 1
+    max_panel_size: 5
+
+runtime:
+  worker_pool:
+    flash_concurrency: 20
+    pro_concurrency: 5
+  memory:
+    long_term_backend: "file://.moon/memory"
+  retries:
+    max_repair_attempts: 1</pre>
+        </div>
+      </section>
+
+      <!-- Stdlib -->
+      <section class="doc-section" id="stdlib">
+        <span class="section-label">Стандартная библиотека</span>
+        <h2>Модули Core.*</h2>
+        <table class="moon-table">
+          <thead><tr><th>Модуль</th><th>Назначение</th><th>Ключевые символы</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>Core.Tools</code></td>
+              <td>Отчёты, условия, mapM</td>
+              <td><code>readFile</code>, <code>saveToFile</code>, <code>when</code>, <code>mapM</code>, <code>pure</code></td>
+            </tr>
+            <tr>
+              <td><code>Core.GitHub</code></td>
+              <td>GitHub-интеграции</td>
+              <td><code>fetchOpenPRs</code>, <code>fetchChangedFiles</code>, <code>PullRequest</code></td>
+            </tr>
+            <tr>
+              <td><code>Core.Memory</code></td>
+              <td>Долгосрочная память проекта</td>
+              <td><code>memory</code>, <code>recall</code></td>
+            </tr>
+            <tr>
+              <td><code>Core.Analyzers</code></td>
+              <td>Хелперы анализа и ревью</td>
+              <td><code>calculateScore</code>, <code>hasCriticalFindings</code>, <code>decideOverallVerdict</code></td>
+            </tr>
+            <tr>
+              <td><code>Core.FS</code></td>
+              <td>Файловая система (реальный I/O в runtime)</td>
+              <td><code>readFile</code>, <code>writeFile</code>, <code>listDir</code>, <code>makeDir</code></td>
+            </tr>
+            <tr>
+              <td><code>Core.Network</code></td>
+              <td>HTTP-клиент (реальный fetch в runtime)</td>
+              <td><code>httpGet</code>, <code>httpPost</code>, <code>fetchJson</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Toolchain -->
+      <section class="doc-section" id="toolchain">
+        <span class="section-label">Инструменты</span>
+        <h2>CLI <code>moon</code></h2>
+        <p>
+          Основной исполняемый файл собирается из SwiftPM (<code>swift build</code>).
+          Версия toolchain: <code>0.3.0-swift-phase5</code>.
+        </p>
+        <table class="moon-table">
+          <thead><tr><th>Команда</th><th>Описание</th></tr></thead>
+          <tbody>
+            <tr><td><code>moon check &lt;file&gt;</code></td><td>Парсинг и проверка типов</td></tr>
+            <tr><td><code>moon run</code></td><td>Запуск target из Moonfile или <code>.moon</code> файла (<code>--mock</code>, <code>--target</code>)</td></tr>
+            <tr><td><code>moon build</code></td><td>Сборка targets в <code>.moon/build/</code> (<code>--target &lt;name&gt;</code>)</td></tr>
+            <tr><td><code>moon plan &lt;file&gt;</code></td><td>DAG выполнения функции</td></tr>
+            <tr><td><code>moon add &lt;pkg[@ver]&gt;</code></td><td>Добавить git-зависимость и vendor</td></tr>
+            <tr><td><code>moon vendor</code></td><td>Vendor git-зависимостей из Moonfile</td></tr>
+            <tr><td><code>moon publish</code></td><td>Валидация пакета и создание git-тега</td></tr>
+            <tr><td><code>moon format &lt;file&gt;</code></td><td>Форматирование (<code>--write</code>, <code>--check</code>)</td></tr>
+            <tr><td><code>moon lsp</code></td><td>Language Server (stdio, Swift)</td></tr>
+            <tr><td><code>moon version</code></td><td>Версии модулей toolchain</td></tr>
+          </tbody>
+        </table>
+        <div class="moon-callout moon-callout-moon">
+          <strong>Legacy only:</strong> <code>moon trace show</code>, <code>moon trace diff</code>, <code>--metrics</code>,
+          storm и реальные LLM-вызовы — в TypeScript CLI под <code>legacy/</code>.
+        </div>
+        <div class="moon-code-block">
+          <div class="moon-code-header"><span class="moon-code-lang">shell</span><button class="moon-code-copy" type="button">Copy</button></div>
+          <pre># Запуск конкретного target (mock LLM)
+moon run --target analyzer --mock
+
+# Сборка всех targets
+moon build
+
+# Registry
+moon add github.com/moon-lang/review-kit@1.0.0
+moon vendor
+moon publish
+
+# Форматирование
+moon format examples/pr-triage.moon --write</pre>
+        </div>
+        <h3>Модули Swift toolchain</h3>
+        <table class="moon-table">
+          <thead><tr><th>Модуль</th><th>Назначение</th></tr></thead>
+          <tbody>
+            <tr><td><code>MoonLexer</code> / <code>MoonParser</code></td><td>Лексер, парсер, layout</td></tr>
+            <tr><td><code>MoonTypechecker</code></td><td>Проверка типов, type classes</td></tr>
+            <tr><td><code>MoonSchemaCompiler</code></td><td>JSON Schema из <code>model</code></td></tr>
+            <tr><td><code>MoonPlanner</code></td><td>DAG выполнения, <code>mapM</code></td></tr>
+            <tr><td><code>MoonBuild</code></td><td><code>moon build</code>, артефакты сборки</td></tr>
+            <tr><td><code>MoonRegistry</code></td><td><code>add</code>, <code>vendor</code>, <code>publish</code></td></tr>
+            <tr><td><code>MoonRuntime</code></td><td>Интерпретатор (<code>--mock</code>)</td></tr>
+            <tr><td><code>MoonFormatter</code> / <code>MoonLSP</code></td><td>Форматирование и LSP</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- VS Code -->
+      <section class="doc-section" id="vscode">
+        <h2>VS Code / Cursor</h2>
+        <p>
+          Расширение <strong>vscode-moon</strong> включает подсветку, LSP, автодополнение,
+          hover-документацию, форматирование, preview промптов и команды Build/Run.
+        </p>
+        <div class="moon-code-block">
+          <div class="moon-code-header"><span class="moon-code-lang">shell</span><button class="moon-code-copy" type="button">Copy</button></div>
+          <pre>bun run vscode:package
+code --install-extension legacy/packages/vscode-moon/vscode-moon-0.2.2.vsix
+
+# Swift LSP: moon.languageServerPath → .build/debug/moon (аргумент lsp)</pre>
+        </div>
+        <h4>Языки в редакторе</h4>
+        <ul>
+          <li><code>moon</code> — файлы <code>*.moon</code></li>
+          <li><code>moonfile</code> — <code>Moonfile</code>, <code>Moonfile.moon</code></li>
+        </ul>
+        <h4>Ключевые настройки</h4>
+        <table class="moon-table">
+          <thead><tr><th>Настройка</th><th>Описание</th></tr></thead>
+          <tbody>
+            <tr><td><code>moon.languageServerPath</code></td><td>Путь к LSP (пусто = bundled server)</td></tr>
+            <tr><td><code>moon.logging.enabled</code></td><td>Логи в Output → Moon</td></tr>
+            <tr><td><code>moon.ai.inlineCompletions.enabled</code></td><td>AI ghost-text (нужен API key)</td></tr>
+            <tr><td><code>moon.build.defaultTarget</code></td><td>Target для Build/Run</td></tr>
+          </tbody>
+        </table>
+        <h4>Команды палитры</h4>
+        <ul>
+          <li><strong>Moon: Build</strong> / <strong>Moon: Run</strong></li>
+          <li><strong>Moon: Preview LLM Prompt</strong></li>
+          <li><strong>Moon: Restart Language Server</strong></li>
+          <li><strong>Moon: Show Output</strong></li>
+        </ul>
+      </section>
+
+    </main>
+  </div>
+
+  <footer class="moon-footer">
+    <div class="moon-brand-icon" aria-hidden="true"></div>
+    <p class="mb-1">The Moon Language · Документация</p>
+    <p class="small text-muted mb-0">
+      <a href="grammar.ebnf">grammar.ebnf</a> ·
+      <a href="https://github.com/moon-lang/moon-lang">GitHub</a>
+    </p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <script src="assets/moon.js"></script>
+</body>
+</html>

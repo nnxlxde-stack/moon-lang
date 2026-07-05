@@ -1,0 +1,15 @@
+{
+  "name": "@moon/typechecker",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./stdlib": "./src/stdlib/index.ts",
+    "./types": "./src/types.ts"
+  },
+  "dependencies": {
+    "@moon/ast": "workspace:*",
+    "@moon/resolver": "workspace:*"
+  }
+}

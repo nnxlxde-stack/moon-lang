@@ -1,0 +1,21 @@
+{
+  "name": "moon-lang",
+  "private": true,
+  "workspaces": [
+    "legacy/packages/*"
+  ],
+  "scripts": {
+    "test": "swift test",
+    "test:legacy": "cd legacy && bun test",
+    "build": "swift build -c release",
+    "build:legacy": "cd legacy && bun run build",
+    "legacy:check": "cd legacy && bun run check",
+    "legacy:run": "cd legacy && bun run run",
+    "vscode:build": "cd legacy && bun run vscode:build",
+    "vscode:package": "cd legacy && bun run vscode:package"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.7.0"
+  }
+}

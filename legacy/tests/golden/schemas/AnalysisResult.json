@@ -1,0 +1,48 @@
+{
+  "type": "object",
+  "description": "AnalysisResult",
+  "properties": {
+    "item": {
+      "description": "t"
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "description": "Finding t",
+        "properties": {},
+        "required": []
+      }
+    },
+    "score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "summary": {
+      "type": "string"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "recommendations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "description": "Recommendation t",
+        "properties": {},
+        "required": []
+      }
+    }
+  },
+  "required": [
+    "item",
+    "findings",
+    "score",
+    "summary",
+    "confidence",
+    "recommendations"
+  ]
+}

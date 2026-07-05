@@ -1,0 +1,6 @@
+{
+  "name": "review-kit",
+  "version": "0.1.0",
+  "moon": ">=0.3.0",
+  "exports": ["src/lib.moon"]
+}

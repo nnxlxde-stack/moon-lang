@@ -1,0 +1,76 @@
+{
+  "ReviewResult": {
+    "type": "object",
+    "description": "ReviewResult",
+    "properties": {
+      "findings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "description": "Finding t",
+          "properties": {},
+          "required": []
+        }
+      },
+      "verdict": {
+        "description": "Verdict"
+      },
+      "summary": {
+        "type": "string"
+      },
+      "confidence": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "suggestions": {
+        "type": "array",
+        "items": {
+          "description": "Suggestion"
+        }
+      }
+    },
+    "required": [
+      "findings",
+      "verdict",
+      "summary",
+      "confidence",
+      "suggestions"
+    ]
+  },
+  "Finding": {
+    "type": "object",
+    "description": "Finding",
+    "properties": {
+      "location": {
+        "description": "Location"
+      },
+      "severity": {
+        "description": "Severity"
+      },
+      "description": {
+        "type": "string"
+      },
+      "category": {
+        "type": "object",
+        "description": "Category a",
+        "properties": {},
+        "required": []
+      }
+    },
+    "required": [
+      "location",
+      "severity",
+      "description",
+      "category"
+    ]
+  },
+  "Verdict": {
+    "enum": [
+      "Approved",
+      "ChangesRequested",
+      "MajorRefactoring",
+      "SecurityIssue"
+    ]
+  }
+}
