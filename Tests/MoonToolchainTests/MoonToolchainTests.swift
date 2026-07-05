@@ -304,7 +304,7 @@ private let repoRoot: URL = {
 
 @Test func vendorFixturePackage() throws {
     let fixture = repoRoot.appendingPathComponent("registry/fixtures/review-kit").path
-    let outRoot = repoRoot.appendingPathComponent(".moon/vendor-test").path
+    let outRoot = repoRoot.appendingPathComponent(".moon/vendor-test-\(UUID().uuidString)").path
     defer { try? FileManager.default.removeItem(atPath: outRoot) }
 
     let dep = MoonDependency.git(host: "github.com", owner: "moon-lang", repo: "review-kit", version: "0.1.0")
