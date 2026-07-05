@@ -156,6 +156,7 @@ public func runProgram(_ program: Program, options: ProgramRunOptions = ProgramR
         )
     }
     let runtimeConfig = loadRuntimeConfig(overrides: mergedOverrides)
+    configureTokenizer(path: runtimeConfig.tokenizerPath)
     let metrics = MetricsCollector(pricing: runtimeConfig.pricing)
 
     var llm: LlmClient = options.llm ?? createLlmClient(config: runtimeConfig, metrics: metrics)

@@ -32,6 +32,9 @@ public enum CompletionContextKind: Sendable {
     case `import`
     case importCore
     case member
+    case config
+    case agentConfig
+    case type
     case name
     case declaration
     case expression
@@ -72,6 +75,25 @@ public func detectCompletionContext(_ text: String, line: Int, character: Int) -
         }
     }
 
+    if before.hasSuffix("with") || before.range(of: #"^\s{4,}\w*:?\s*$"#, options: .regularExpression) != nil {
+        return CompletionContext(kind: .config, prefix: prefix)
+    }
+
+    if isAgentConfigLine(text: text, line: line, before: before) {
+        return CompletionContext(kind: .agentConfig, prefix: prefix)
+    }
+
+    if before.range(of: #"::\s*[\w.[\]]*$"#, options: .regularExpression) != nil {
+        let typePrefix = before.range(of: #"::\s*([\w.[\]]*)$"#, options: .regularExpression)
+            .map { String(before[$0]).replacingOccurrences(of: "::", with: "").trimmingCharacters(in: .whitespaces) } ?? prefix
+        return CompletionContext(kind: .type, prefix: typePrefix)
+    }
+
+    if before.trimmingCharacters(in: .whitespaces).isEmpty
+        || before.range(of: #"^\s*(main|agent|model|data)\b"#, options: .regularExpression) != nil {
+        return CompletionContext(kind: .declaration, prefix: prefix)
+    }
+
     if !prefix.isEmpty {
         return CompletionContext(kind: .name, prefix: prefix)
     }
@@ -100,15 +122,50 @@ public func getCompletions(
         return coreSubmoduleCompletions(prefix: ctx.prefix)
     case .member:
         return memberCompletions(objectName: ctx.objectName ?? "", prefix: ctx.prefix, agents: agents, table: table)
+    case .config:
+        return configCompletions(prefix: ctx.prefix)
+    case .agentConfig:
+        return agentConfigCompletions(prefix: ctx.prefix)
+    case .type:
+        return typeCompletions(prefix: ctx.prefix)
     case .name, .expression:
         return nameCompletions(program: program, table: table, prefix: ctx.prefix)
     case .declaration:
-        return [
-            MoonCompletionItem(label: "import", kind: CompletionItemKind.keyword.rawValue),
-            MoonCompletionItem(label: "model", kind: CompletionItemKind.keyword.rawValue),
-            MoonCompletionItem(label: "agent", kind: CompletionItemKind.keyword.rawValue),
-            MoonCompletionItem(label: "main", kind: CompletionItemKind.keyword.rawValue),
-        ]
+        return declarationCompletions()
+    }
+}
+
+public func getPartialCompletions(
+    _ text: String,
+    entryPath: String,
+    line: Int,
+    character: Int
+) -> [MoonCompletionItem] {
+    let ctx = detectCompletionContext(text, line: line, character: character)
+    switch ctx.kind {
+    case .import:
+        return importCompletions(prefix: ctx.prefix, entryPath: entryPath)
+    case .importCore:
+        return coreSubmoduleCompletions(prefix: ctx.prefix)
+    case .member:
+        return memberCompletions(objectName: ctx.objectName ?? "", prefix: ctx.prefix, agents: [], table: [:])
+    case .config:
+        return configCompletions(prefix: ctx.prefix)
+    case .agentConfig:
+        return agentConfigCompletions(prefix: ctx.prefix)
+    case .type:
+        return typeCompletions(prefix: ctx.prefix)
+    case .declaration:
+        return declarationCompletions()
+    case .name, .expression:
+        var items = declarationCompletions()
+        for kw in doKeywords where matchesCompletionPrefix(kw, prefix: ctx.prefix) {
+            items.append(MoonCompletionItem(label: kw, kind: CompletionItemKind.keyword.rawValue))
+        }
+        for path in allCoreModulePaths() where matchesCompletionPrefix(path, prefix: ctx.prefix) {
+            items.append(MoonCompletionItem(label: path, kind: CompletionItemKind.module.rawValue, detail: "Core stdlib (import required)"))
+        }
+        return items
     }
 }
 
@@ -198,6 +255,64 @@ private func add(
     guard !seen.contains(label) else { return }
     seen.insert(label)
     items.append(MoonCompletionItem(label: label, kind: kind.rawValue, detail: detail))
+}
+
+private let doKeywords = ["do", "let", "with", "storm", "pure", "when", "if", "then", "else", "not"]
+private let bindConfigKeys = ["context", "focus", "maxTokens", "previousVersion", "filter", "temperature"]
+private let stormConfigKeys = ["panel", "synthesizer", "rounds", "context"]
+private let agentConfigKeys = ["model", "temperature", "systemPrompt", "role", "focus", "style"]
+private let typeNames = [
+    "String", "Int", "Float", "Bool", "IO", "List", "Unit", "Code",
+    "Documentation", "Requirements", "Entity", "Agent", "Scope", "Verdict",
+    "Analyzer", "Reviewer", "LongTerm", "PullRequest", "ChangedFile",
+]
+private let modelNames = ["deepseek-v4-flash", "deepseek-v4-pro"]
+
+private func declarationCompletions() -> [MoonCompletionItem] {
+    ["import", "model", "agent", "data", "instance", "macro", "main"].map {
+        MoonCompletionItem(label: $0, kind: CompletionItemKind.keyword.rawValue)
+    }
+}
+
+private func configCompletions(prefix: String) -> [MoonCompletionItem] {
+    let keys = bindConfigKeys + stormConfigKeys
+    return filterPrefix(keys.map {
+        MoonCompletionItem(label: "\($0):", kind: CompletionItemKind.property.rawValue, detail: "bind/storm config")
+    }, prefix: prefix)
+}
+
+private func agentConfigCompletions(prefix: String) -> [MoonCompletionItem] {
+    var items = filterPrefix(agentConfigKeys.map {
+        MoonCompletionItem(label: "\($0):", kind: CompletionItemKind.property.rawValue, detail: "agent config")
+    }, prefix: prefix)
+    items.append(contentsOf: filterPrefix(modelNames.map {
+        MoonCompletionItem(label: $0, kind: CompletionItemKind.enumMember.rawValue, detail: "model id")
+    }, prefix: prefix))
+    return items
+}
+
+private func typeCompletions(prefix: String) -> [MoonCompletionItem] {
+    filterPrefix(typeNames.map {
+        MoonCompletionItem(label: $0, kind: CompletionItemKind.class.rawValue, detail: "type")
+    }, prefix: prefix)
+}
+
+private func isAgentConfigLine(text: String, line: Int, before: String) -> Bool {
+    guard before.range(of: #"^\s+\w*:?\s*$"#, options: .regularExpression) != nil
+        || before.range(of: #"^\s+\w+[\w-]*$"#, options: .regularExpression) != nil else {
+        return false
+    }
+    let lines = text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+    for i in stride(from: line, through: 0, by: -1) {
+        let row = lines[i]
+        if row.contains("agent ") { return true }
+        if row.contains("model ") || row.contains("data ") { return false }
+    }
+    return false
+}
+
+private func matchesCompletionPrefix(_ label: String, prefix: String) -> Bool {
+    prefix.isEmpty || label.lowercased().hasPrefix(prefix.lowercased())
 }
 
 private func filterPrefix(_ items: [MoonCompletionItem], prefix: String) -> [MoonCompletionItem] {

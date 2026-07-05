@@ -2,7 +2,7 @@
 
 **Moon** — AI-native язык программирования для описания LLM-агентов, типизированных моделей данных и монадических пайплайнов. Синтаксис вдохновлён Haskell; конфигурация проекта — манифестом **Moonfile** в духе SwiftPM.
 
-**Toolchain:** `0.3.0-swift-phase7` · Swift 6.3+ · 48 тестов
+**Toolchain:** `0.3.0-swift-phase8` · Swift 6.3+ · 53 теста
 
 <p align="center">
   <a href="docs/index.html"><strong>📖 Полная документация</strong></a>
@@ -24,8 +24,9 @@
 ### Требования
 
 - **Swift 6.3+** (основной toolchain, Windows/macOS/Linux)
-- [Bun](https://bun.sh) 1.1+ (legacy TypeScript прототип и VS Code extension)
-- `DEEPSEEK_API_KEY` — для реальных LLM-вызовов (пока только в legacy runtime)
+- [Bun](https://bun.sh) 1.1+ (опционально: VS Code extension packaging)
+- `DEEPSEEK_API_KEY` — для реальных LLM-вызовов (`moon run --no-mock`)
+- `GITHUB_TOKEN` — для реальных GitHub API вызовов (`Core.GitHub`)
 
 ### Swift toolchain (новый)
 
@@ -42,19 +43,6 @@ moon plan examples/code-analyzer.moon
 moon run --mock --target analyzer
 moon build
 moon format examples/pr-triage.moon --write
-```
-
-### Legacy TypeScript (рабочий прототип)
-
-```bash
-bun install
-bun run test:legacy
-
-# Парсинг и типы
-bun run legacy:check examples/code-analyzer.moon
-
-# Запуск первого target из Moonfile (без API)
-bun run legacy:run -- --mock
 ```
 
 ### Минимальный пример
@@ -172,10 +160,10 @@ moon-lang/
 └── docs/
 ```
 
-### Ограничения Swift toolchain (Phase 7)
+### Ограничения Swift toolchain (Phase 8)
 
-- Runtime: Moonfile overrides, `routesTo`, `assemblePrompt`, tokenizer estimate; без HuggingFace tokenizer
-- LSP: нет Moonfile LSP, code actions, signature help, code lens
+- Tokenizer: HuggingFace через `pip install tokenizers` + `paths.tokenizer` в Moonfile (иначе character estimate)
+- LSP: нет incremental sync и `moon-symbols.json` workspace index
 - Registry: только `github.com`, vendor через `git clone`
 
 ## Документация
@@ -202,9 +190,8 @@ xdg-open docs/index.html
 ## Разработка
 
 ```bash
-swift build && swift test         # Swift toolchain
-bun run test:legacy               # 108+ legacy тестов
-bun run vscode:package            # VSIX (legacy/packages/vscode-moon)
+swift build && swift test         # Swift toolchain (основной)
+bun run vscode:package            # VSIX (legacy/packages/vscode-moon, LSP → Swift moon)
 ```
 
 ## Лицензия

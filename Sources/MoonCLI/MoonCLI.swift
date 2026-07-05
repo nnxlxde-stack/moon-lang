@@ -472,7 +472,7 @@ struct MoonCLI {
         print("  MoonRegistry   \(MoonRegistryVersion.current)")
         print("  MoonFormatter  \(MoonFormatterVersion.current)")
         print("  MoonLSP        \(MoonLSPVersion.current)")
-        print("  legacy TS/Bun  available under legacy/")
+        print("  legacy TS/Bun  reference only (Swift toolchain complete)")
     }
 
     private static func printUsage() {
@@ -502,5 +502,5 @@ struct MoonCLI {
 }
 
 enum MoonToolchainVersion {
-    static let current = "0.3.0-swift-phase7"
+    static let current = "0.3.0-swift-phase8"
 }

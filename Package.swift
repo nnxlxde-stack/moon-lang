@@ -43,6 +43,8 @@ let package = Package(
             "MoonResolver",
             "MoonFormatter",
             "MoonMoonfile",
+            "MoonPrompt",
+            "MoonSchemaCompiler",
         ]),
         .target(name: "MoonPrompt", dependencies: ["MoonAST", "MoonSchemaCompiler"]),
         .target(name: "MoonRuntime", dependencies: [

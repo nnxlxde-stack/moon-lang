@@ -391,6 +391,43 @@ private let repoRoot: URL = {
     #expect(diags.isEmpty)
 }
 
+@Test func moonfileLspDiagnosticsValid() throws {
+    let path = repoRoot.appendingPathComponent("Moonfile")
+    let src = try String(contentsOf: path, encoding: .utf8)
+    let diags = collectMoonfileDiagnostics(src)
+    #expect(diags.isEmpty)
+}
+
+@Test func moonfileLspCompletionSections() throws {
+    let src = "package \"demo\"\n\n"
+    let items = getMoonfileCompletions(src, line: 2, character: 0, projectRoot: repoRoot.path)
+    let labels = Set(items.map(\.label))
+    #expect(labels.contains("targets:"))
+    #expect(labels.contains("dependencies:"))
+}
+
+@Test func promptPreviewFindsAnalyzeSite() throws {
+    let path = repoRoot.appendingPathComponent("examples/code-reviewer.moon")
+    let src = try String(contentsOf: path, encoding: .utf8)
+    let program = try MoonParser().parse(src)
+    let sites = findPromptSites(program)
+    #expect(!sites.isEmpty)
+    if let site = sites.first {
+        let preview = buildPromptPreview(program, line: site.line)
+        #expect(preview != nil)
+        #expect(preview?.assembled.messages.isEmpty == false)
+    }
+}
+
+@Test func stdlibFSWriteAndRead() throws {
+    let dir = repoRoot.appendingPathComponent(".moon/fs-test-\(UUID().uuidString)")
+    defer { try? FileManager.default.removeItem(at: dir) }
+    let file = dir.appendingPathComponent("nested/out.txt")
+    try StdlibFS.writeFile(file.path, content: "hello moon")
+    #expect(try StdlibFS.readFile(file.path) == "hello moon")
+    #expect(StdlibFS.pathExists(file.path))
+}
+
 @Test func lspImportCompletion() throws {
     let path = repoRoot.appendingPathComponent("examples/code-analyzer.moon")
     let src = try String(contentsOf: path, encoding: .utf8)
