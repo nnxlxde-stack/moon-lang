@@ -163,31 +163,115 @@ func runDoStmt(_ stmt: DoStatement, _ ctx: RuntimeContext) async throws -> Runti
         bindPattern(pattern, value, ctx)
         return value
     case .storm:
-        throw RuntimeError("Storm statements are not yet supported")
+        let value = try await runStormStmt(stmt, ctx)
+        if case .storm(let pattern, _, _, _) = stmt {
+            bindPattern(pattern, value, ctx)
+        }
+        return value
     case .action(let expr, _, _):
         return try await evalExpr(expr, ctx)
     }
+}
+
+struct AgentAnalyzeOptions: Sendable {
+    var stormRound: Int?
+    var peerOutputs: [(agent: String, summary: String)]?
+    var configOverride: [String: RuntimeValue]?
 }
 
 func runAgentAnalyze(
     _ agentName: String,
     _ input: RuntimeValue,
     config: [ConfigItem],
-    ctx: RuntimeContext
+    ctx: RuntimeContext,
+    options: AgentAnalyzeOptions = AgentAnalyzeOptions()
 ) async throws -> RuntimeValue {
     guard let agent = ctx.agents[agentName] else {
         throw RuntimeError("Unknown agent: \(agentName)")
     }
 
     let model = agentModel(agent)
+    let tier = modelToTier(model)
     let schema = schemaForAgent(agent)
-    _ = config
-    return try await ctx.llm.complete(LlmRequest(
-        agent: agentName,
-        model: model,
+
+    var configValues = options.configOverride ?? [:]
+    for item in config {
+        configValues[item.key] = try await evalExpr(item.value, ctx)
+    }
+
+    let messages = assembleAgentMessages(
+        agent: agent,
+        agentName: agentName,
         input: input,
-        schema: schema
-    ))
+        config: configValues,
+        peerOutputs: options.peerOutputs,
+        stormRound: options.stormRound
+    )
+
+    let temperature = configDouble(configValues["temperature"]) ?? 0.25
+
+    let requestConfig = configValues
+    return try await ctx.pool.run(tier) {
+        try await ctx.llm.complete(LlmRequest(
+            agent: agentName,
+            model: model,
+            input: input,
+            schema: schema,
+            config: requestConfig,
+            messages: messages,
+            temperature: temperature,
+            stormRound: options.stormRound
+        ))
+    }
+}
+
+private func assembleAgentMessages(
+    agent: AgentDecl,
+    agentName: String,
+    input: RuntimeValue,
+    config: [String: RuntimeValue],
+    peerOutputs: [(agent: String, summary: String)]?,
+    stormRound: Int?
+) -> [LlmChatMessage] {
+    var system = agentSystemPrompt(agent)
+    if let round = stormRound {
+        system += "\n\nStorm round: \(round)"
+    }
+
+    var userParts: [String] = ["## Input", runtimeValueDescription(input)]
+    if let context = config["context"] {
+        userParts.append("## Project context")
+        userParts.append(runtimeValueDescription(context))
+    }
+    if let peers = peerOutputs, !peers.isEmpty {
+        userParts.append("## Peer perspectives")
+        for peer in peers {
+            userParts.append("### \(peer.agent)")
+            userParts.append(peer.summary)
+        }
+    }
+
+    return [
+        LlmChatMessage(role: "system", content: system),
+        LlmChatMessage(role: "user", content: userParts.joined(separator: "\n\n")),
+    ]
+}
+
+func agentSystemPrompt(_ agent: AgentDecl) -> String {
+    for item in agent.config where item.key == "systemPrompt" {
+        if case .lit(.string(let text, _), _) = item.value {
+            return text
+        }
+    }
+    return "You are the \(agent.name) agent. Respond with JSON matching the schema."
+}
+
+private func configDouble(_ value: RuntimeValue?) -> Double? {
+    switch value {
+    case .double(let d): return d
+    case .int(let n): return Double(n)
+    default: return nil
+    }
 }
 
 func findUserFunction(_ program: Program, _ name: String) -> FunctionDecl? {

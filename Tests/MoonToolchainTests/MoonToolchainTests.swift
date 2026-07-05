@@ -144,7 +144,9 @@ private let repoRoot: URL = {
     let path = repoRoot.appendingPathComponent("examples/code-analyzer.moon")
     let src = try String(contentsOf: path, encoding: .utf8)
     let program = try MoonParser().parse(src)
-    let result = try await runProgram(program, options: RunOptions(mock: true))
+    let result = try await runProgram(program, options: ProgramRunOptions(
+        overrides: RuntimeConfigOverrides(mock: true)
+    ))
 
     #expect(result.effects.contains { $0.kind == "saveToFile" })
     #expect(result.effects.contains { $0.kind == "postToSlack" })
@@ -155,7 +157,9 @@ private let repoRoot: URL = {
     let path = repoRoot.appendingPathComponent("examples/code-reviewer.moon")
     let src = try String(contentsOf: path, encoding: .utf8)
     let program = try MoonParser().parse(src)
-    let result = try await runProgram(program, options: RunOptions(mock: true))
+    let result = try await runProgram(program, options: ProgramRunOptions(
+        overrides: RuntimeConfigOverrides(mock: true)
+    ))
 
     #expect(result.effects.contains { $0.kind == "saveToFile" })
     #expect(result.dag.nodes.count > 0)
@@ -335,6 +339,37 @@ private let repoRoot: URL = {
     #expect(results.count == 1)
     #expect(results[0].name == "pr-triage")
     #expect(results[0].ok)
+}
+
+@Test func stormRunsPanelRoundsThenSynthesizer() async throws {
+    let src = """
+    import Core.Tools
+
+    agent PanelA :: Analyzer Code
+      model: deepseek-v4-flash
+
+    agent PanelB :: Analyzer Code
+      model: deepseek-v4-flash
+
+    agent Synth :: Analyzer Code
+      model: deepseek-v4-pro
+
+    main :: IO ()
+    main = do
+      consensus <- storm "input"
+          with panel: [PanelA, PanelB]
+               synthesizer: Synth
+               rounds: 2
+      pure $ consensus
+    """
+    let program = try MoonParser().parse(src)
+    let mock = MockLlmClient()
+    let result = try await runProgram(program, options: ProgramRunOptions(
+        overrides: RuntimeConfigOverrides(mock: true),
+        llm: mock
+    ))
+    #expect(result.dag.nodes.count > 0)
+    #expect(mock.callCount == 5)
 }
 
 @Test func runtimeConfigUsesMockWithoutApiKey() {
