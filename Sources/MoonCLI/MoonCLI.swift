@@ -347,21 +347,28 @@ struct MoonCLI {
         do {
             let source = try String(contentsOfFile: resolved.file, encoding: .utf8)
             let program = try MoonParser().parse(source)
-            let result = await MoonRuntime().run(program: program, options: RunOptions(
-                mock: mock,
-                entryFunction: entryFn,
-                traceLlm: traceLlm,
-                showMetrics: metrics
-            ))
-            if result.success {
-                print(result.message)
-                if let targetName = resolved.targetName {
-                    print("target: \(targetName)")
-                }
-                return 0
+            var overrides = RuntimeConfigOverrides(mock: mock)
+            if let moonfilePath = findMoonfile(startDir: resolved.projectRoot),
+               let moonfile = try? loadMoonfile(path: moonfilePath) {
+                overrides = mergeRuntimeOverrides(
+                    runtimeOverrides(from: moonfileToRuntimeOverrides(moonfile)),
+                    overrides
+                )
             }
-            fputs("error: \(result.message)\n", stderr)
-            return 1
+            let result = try await runProgram(program, options: ProgramRunOptions(
+                functionName: entryFn,
+                projectRoot: resolved.projectRoot,
+                overrides: overrides,
+                traceLlm: traceLlm || overrides.traceByDefault == true
+            ))
+            print("OK (\(result.dag.nodes.count) DAG nodes)")
+            if let targetName = resolved.targetName {
+                print("target: \(targetName)")
+            }
+            if metrics {
+                print(formatMetrics(result.metrics))
+            }
+            return 0
         } catch {
             fputs("moon: \(error)\n", stderr)
             return 1
@@ -399,13 +406,11 @@ struct MoonCLI {
         let projectRoot = URL(fileURLWithPath: moonfilePath).deletingLastPathComponent().path
 
         if let moonfile {
-            if let name = target ?? positional, let rel = moonfile.targets[name] {
-                let file = URL(fileURLWithPath: projectRoot).appendingPathComponent(rel).standardizedFileURL.path
-                return .success(file: file, projectRoot: projectRoot, targetName: name)
-            }
-            if let first = moonfile.targets.sorted(by: { $0.key < $1.key }).first {
-                let file = URL(fileURLWithPath: projectRoot).appendingPathComponent(first.value).standardizedFileURL.path
-                return .success(file: file, projectRoot: projectRoot, targetName: first.key)
+            do {
+                let resolved = try resolveMoonfileTarget(moonfile, projectRoot: projectRoot, target: target ?? positional)
+                return .success(file: resolved.path, projectRoot: projectRoot, targetName: resolved.name)
+            } catch {
+                return .failure(error.localizedDescription)
             }
         }
 
@@ -494,5 +499,5 @@ struct MoonCLI {
 }
 
 enum MoonToolchainVersion {
-    static let current = "0.3.0-swift-phase6"
+    static let current = "0.3.0-swift-phase7"
 }
