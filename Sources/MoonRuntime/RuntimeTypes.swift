@@ -83,7 +83,7 @@ public final class RuntimeContext: @unchecked Sendable {
     }
 }
 
-public struct LlmChatMessage: Sendable, Equatable {
+public struct LlmChatMessage: Codable, Sendable, Equatable {
     public var role: String
     public var content: String
 
