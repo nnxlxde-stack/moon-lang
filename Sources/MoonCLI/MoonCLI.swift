@@ -146,7 +146,10 @@ struct MoonCLI {
     }
 
     private static func runBuild(args: [String]) throws -> Int32 {
-        let target = flagValue(args, "--target")
+        let positionalTarget = args.first(where: { arg in
+            !arg.hasPrefix("--") && !arg.hasSuffix(".moon") && arg != "Moonfile" && arg != "Moonfile.moon"
+        })
+        let target = flagValue(args, "--target") ?? positionalTarget
         let entryFn = flagValue(args, "--fn") ?? "main"
         let fileArg = args.first(where: { $0.hasSuffix(".moon") && $0 != "--target" && $0 != "--fn" })
 
@@ -481,7 +484,7 @@ struct MoonCLI {
           check <file.moon>   Parse and typecheck
           run                 Execute target or .moon file [--mock|--no-mock] [--metrics] [--trace-llm]
           trace show|diff     Inspect LLM trace runs
-          build               Build Moonfile targets
+          build [target]      Build Moonfile targets [--target NAME]
           add <pkg[@ver]>     Add dependency and vendor
           vendor              Vendor git dependencies from Moonfile
           publish             Validate package and create git tag

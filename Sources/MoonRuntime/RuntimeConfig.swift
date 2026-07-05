@@ -185,7 +185,7 @@ public func loadRuntimeConfig(overrides: RuntimeConfigOverrides = RuntimeConfigO
 
 public func createLlmClient(config: RuntimeConfig, metrics: MetricsCollector? = nil) -> LlmClient {
     if config.useMock {
-        return MockLlmClient()
+        return MockLlmClient(metrics: metrics, pricing: config.pricing)
     }
     return DeepSeekClient(config: DeepSeekClientConfig(
         apiKey: config.apiKey ?? "",

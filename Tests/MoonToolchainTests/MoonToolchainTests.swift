@@ -495,6 +495,21 @@ private let repoRoot: URL = {
     #expect(snap.memory.recallMisses == 1)
 }
 
+@Test func mockLlmRecordsMetrics() async throws {
+    let pricing = loadPricingTable(path: repoRoot.appendingPathComponent("docs/model-pricing.json").path)
+    let metrics = MetricsCollector(pricing: pricing)
+    let mock = MockLlmClient(metrics: metrics, pricing: pricing)
+    _ = try await mock.complete(LlmRequest(
+        agent: "DocSummarizer",
+        model: "deepseek-v4-flash",
+        input: .string("doc"),
+        schema: analyzeOutputSchema
+    ))
+    let snap = metrics.snapshot()
+    #expect(snap.llmCalls == 1)
+    #expect(snap.tokens.prompt > 0)
+}
+
 @Test func metricsCollectorTracksCost() {
     let pricing = loadPricingTable(path: repoRoot.appendingPathComponent("docs/model-pricing.json").path)
     let metrics = MetricsCollector(pricing: pricing)

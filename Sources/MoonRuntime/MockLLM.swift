@@ -29,11 +29,36 @@ public func fixtureFromSchema(_ schema: JsonSchema, path: String = "root") -> Ru
 
 public final class MockLlmClient: LlmClient, @unchecked Sendable {
     public private(set) var callCount: Int = 0
+    private let metrics: MetricsCollector?
+    private let pricing: PricingTable?
 
-    public init() {}
+    public init(metrics: MetricsCollector? = nil, pricing: PricingTable? = nil) {
+        self.metrics = metrics
+        self.pricing = pricing
+    }
 
     public func complete(_ request: LlmRequest) async throws -> RuntimeValue {
         callCount += 1
-        return fixtureFromSchema(request.schema)
+        let output = fixtureFromSchema(request.schema)
+
+        if let metrics, let pricing {
+            let promptText = (request.messages ?? buildMessages(request))
+                .map(\.content)
+                .joined(separator: "\n")
+            let outputText = runtimeValueDescription(output)
+            let promptTokens = countTokens(promptText, model: request.model, pricing: pricing)
+            let completionTokens = countTokens(outputText, model: request.model, pricing: pricing)
+            metrics.recordLlmUsage(
+                model: request.model,
+                usage: TokenUsage(
+                    prompt: promptTokens,
+                    completion: completionTokens,
+                    cacheHit: 0,
+                    cacheMiss: promptTokens
+                )
+            )
+        }
+
+        return output
     }
 }
