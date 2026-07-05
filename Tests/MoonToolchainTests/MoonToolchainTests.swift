@@ -355,9 +355,10 @@ private let repoRoot: URL = {
         properties: ["summary": .string(), "confidence": .number(minimum: 0, maximum: 1)],
         required: ["summary", "confidence"]
     )
-    let dict = toStrictJsonSchema(schema) as? [String: Any]
-    #expect(dict?["type"] as? String == "object")
-    #expect((dict?["required"] as? [String])?.contains("summary") == true)
+    let dict = toStrictJsonSchema(schema)
+    #expect(dict["type"] as? String == "object")
+    let required = dict["required"] as? [String] ?? []
+    #expect(required.contains("summary"))
 }
 
 @Test func fileMemoryBackendPersistsAndRecalls() async throws {

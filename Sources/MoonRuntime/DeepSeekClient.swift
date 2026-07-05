@@ -278,7 +278,7 @@ func usageFromAnthropic(_ payload: [String: Any], request: LlmRequest, rawOutput
     )
 }
 
-func toStrictJsonSchema(_ schema: JsonSchema) -> [String: Any] {
+public func toStrictJsonSchema(_ schema: JsonSchema) -> [String: Any] {
     switch schema {
     case .object(let properties, let required):
         var result: [String: Any] = ["type": "object", "additionalProperties": false]
