@@ -137,9 +137,26 @@ public indirect enum JsonSchema: Sendable, Equatable {
 
 public struct RunMetrics: Sendable, Equatable {
     public var llmCalls: Int
+    public var tokens: TokenUsage
+    public var costUsd: Double
+    public var memory: MemoryMetrics
+    public var worker: WorkerMetrics
+    public var byModel: [String: ModelMetrics]
 
-    public init(llmCalls: Int = 0) {
+    public init(
+        llmCalls: Int = 0,
+        tokens: TokenUsage = TokenUsage(),
+        costUsd: Double = 0,
+        memory: MemoryMetrics = MemoryMetrics(),
+        worker: WorkerMetrics = WorkerMetrics(),
+        byModel: [String: ModelMetrics] = [:]
+    ) {
         self.llmCalls = llmCalls
+        self.tokens = tokens
+        self.costUsd = costUsd
+        self.memory = memory
+        self.worker = worker
+        self.byModel = byModel
     }
 }
 

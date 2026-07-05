@@ -337,6 +337,22 @@ private let repoRoot: URL = {
     #expect(results[0].ok)
 }
 
+@Test func metricsCollectorTracksCost() {
+    let pricing = loadPricingTable(path: repoRoot.appendingPathComponent("docs/model-pricing.json").path)
+    let metrics = MetricsCollector(pricing: pricing)
+    metrics.recordLlmUsage(
+        model: "deepseek-v4-flash",
+        usage: TokenUsage(prompt: 1000, completion: 500, cacheHit: 200, cacheMiss: 800)
+    )
+    metrics.recordRecall(hit: false)
+    metrics.recordRecall(hit: true)
+    let snap = metrics.snapshot()
+    #expect(snap.llmCalls == 1)
+    #expect(snap.costUsd > 0)
+    #expect(snap.memory.recallHits == 1)
+    #expect(snap.memory.recallMisses == 1)
+}
+
 @Test func validateSchemaRejectsInvalidConfidence() {
     let schema = JsonSchema.object(
         properties: [
