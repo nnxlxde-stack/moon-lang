@@ -337,6 +337,42 @@ private let repoRoot: URL = {
     #expect(results[0].ok)
 }
 
+@Test func validateSchemaRejectsInvalidConfidence() {
+    let schema = JsonSchema.object(
+        properties: [
+            "summary": .string(),
+            "confidence": .number(minimum: 0, maximum: 1),
+        ],
+        required: ["summary", "confidence"]
+    )
+    let valid = RuntimeValue.record(typeName: nil, fields: [
+        "summary": .string("ok"),
+        "confidence": .double(0.8),
+    ])
+    let invalid = RuntimeValue.record(typeName: nil, fields: [
+        "summary": .string("ok"),
+        "confidence": .double(1.5),
+    ])
+    #expect(throws: Never.self) { try validateAgainstSchema(schema, valid) }
+    #expect(throws: LlmValidationError.self) { try validateAgainstSchema(schema, invalid) }
+}
+
+@Test func parseJsonContentExtractsFencedJson() throws {
+    let raw = """
+    Here is the result:
+    ```json
+    {"summary":"ok","confidence":0.5}
+    ```
+    """
+    let value = try parseJsonContent(raw)
+    if case .record(_, let fields) = value,
+       case .string(let summary) = fields["summary"] {
+        #expect(summary == "ok")
+    } else {
+        Issue.record("Expected record with summary")
+    }
+}
+
 @Test func workerPoolRunAllPreservesOrder() async throws {
     let pool = WorkerPool(config: WorkerPoolConfig(flashConcurrency: 4, proConcurrency: 2))
     let results = try await pool.runAll(.flash, (0..<5).map { index in
