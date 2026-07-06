@@ -25,11 +25,17 @@
 
 Исторический TypeScript/Bun toolchain — ветка [`legacy`](https://github.com/nnxlxde-stack/moon-lang/tree/legacy).
 
-### Установка
+### Установка (Windows)
 
 ```powershell
+# Полная установка
 irm https://raw.githubusercontent.com/nnxlxde-stack/moon-setup/main/install-all.ps1 | iex
+
+# Интерактивный менеджер (install / update / uninstall)
+irm https://raw.githubusercontent.com/nnxlxde-stack/moon-setup/main/moon-manage.ps1 | iex
 ```
+
+Документация: [nnxlxde-stack.github.io/moon-lang](https://nnxlxde-stack.github.io/moon-lang/)
 
 ---
 
@@ -48,11 +54,12 @@ irm https://raw.githubusercontent.com/nnxlxde-stack/moon-setup/main/install-all.
 
 ```powershell
 irm https://raw.githubusercontent.com/nnxlxde-stack/moon-setup/main/install-all.ps1 | iex
+irm https://raw.githubusercontent.com/nnxlxde-stack/moon-setup/main/moon-manage.ps1 | iex
 ```
 
-Устанавливает **moon** + Swift runtime в `%APPDATA%\Moon` и добавляет в PATH пользователя.
+Устанавливает **moon** + Swift runtime + stdlib в `%APPDATA%\Moon`, расширение VS Code/Cursor, PATH.
 
-Подробнее — [moon-setup](https://github.com/nnxlxde-stack/moon-setup).
+Перед установкой расширения закройте редактор. [moon-setup](https://github.com/nnxlxde-stack/moon-setup) · [документация](https://nnxlxde-stack.github.io/moon-lang/#quickstart)
 
 ### Требования
 
@@ -152,11 +159,15 @@ moon help
 
 ## VS Code / Cursor
 
-Расширение: [moon-vscode Releases](https://github.com/nnxlxde-stack/moon-vscode/releases/latest) или `moon-setup`.
+Расширение: [moon-vscode Releases](https://github.com/nnxlxde-stack/moon-vscode/releases/latest) или [moon-setup](https://github.com/nnxlxde-stack/moon-setup).
+
+```powershell
+irm https://raw.githubusercontent.com/nnxlxde-stack/moon-setup/main/moon-manage.ps1 | iex
+```
 
 ```bash
-# Скачать .vsix из Releases, затем:
-code --install-extension vscode-moon-0.3.0.vsix
+# Скачать .vsix из Releases (закройте редактор), затем:
+code-insiders --install-extension vscode-moon-0.3.2.vsix
 ```
 
 После `swift build` в проекте Moon расширение автоматически подхватит `.build/debug/moon` как LSP.

@@ -250,7 +250,7 @@
             </tr>
             <tr>
               <td><a href="https://github.com/nnxlxde-stack/moon-setup" target="_blank" rel="noopener">moon-setup</a></td>
-              <td>Скрипты установки moon-lang + moon-vscode</td>
+              <td>Установка, обновление, удаление; TUI-менеджер <code>moon-manage.ps1</code></td>
             </tr>
           </tbody>
         </table>
@@ -266,16 +266,49 @@
         <span class="section-label">Старт</span>
         <h2>Быстрый старт</h2>
 
-        <h3>Windows — установка одной командой</h3>
-        <p>Рекомендуемый способ: <strong>moon-setup</strong> скачивает <code>moon.exe</code>, Swift runtime и stdlib в <code>%APPDATA%\Moon</code> и добавляет в PATH.</p>
+        <h3>Windows — moon-setup</h3>
+        <p>
+          <strong>moon-setup</strong> скачивает <code>moon.exe</code>, Swift runtime и stdlib в
+          <code>%APPDATA%\Moon</code>, ставит расширение VS Code / Cursor и добавляет пути в PATH.
+        </p>
+
+        <div class="moon-feature-grid">
+          <div class="moon-feature">
+            <h4>Установка</h4>
+            <p class="mb-0 small text-muted">moon + runtime + stdlib + расширение</p>
+          </div>
+          <div class="moon-feature">
+            <h4>Менеджер (TUI)</h4>
+            <p class="mb-0 small text-muted">меню: install / update / uninstall / verify</p>
+          </div>
+          <div class="moon-feature">
+            <h4>Обновление</h4>
+            <p class="mb-0 small text-muted">последние релизы moon-lang и moon-vscode</p>
+          </div>
+        </div>
+
         <div class="moon-code-block">
           <div class="moon-code-header">
             <span class="moon-code-lang">powershell</span>
             <button class="moon-code-copy" type="button">Copy</button>
           </div>
-          <pre>irm https://raw.githubusercontent.com/nnxlxde-stack/moon-setup/main/install-all.ps1 | iex
+          <pre># Установка
+irm https://raw.githubusercontent.com/nnxlxde-stack/moon-setup/main/install-all.ps1 | iex
+
+# Интерактивный менеджер (рекомендуется)
+irm https://raw.githubusercontent.com/nnxlxde-stack/moon-setup/main/moon-manage.ps1 | iex
+
+# Обновление / удаление
+irm https://raw.githubusercontent.com/nnxlxde-stack/moon-setup/main/update-all.ps1 | iex
+irm https://raw.githubusercontent.com/nnxlxde-stack/moon-setup/main/uninstall-all.ps1 | iex
+
 moon version
 moon check examples/code-analyzer.moon</pre>
+        </div>
+
+        <div class="moon-callout moon-callout-warn">
+          Перед установкой расширения <strong>закройте VS Code / Cursor</strong> полностью.
+          Если редактор запущен, скрипт предложит подождать или покажет команду для ручной установки.
         </div>
 
         <h3>Требования</h3>
@@ -807,12 +840,13 @@ moon format examples/pr-triage.moon --write</pre>
         </p>
         <div class="moon-code-block">
           <div class="moon-code-header"><span class="moon-code-lang">shell</span><button class="moon-code-copy" type="button">Copy</button></div>
-          <pre># Windows (рекомендуется):
+          <pre># Windows — полная установка или TUI-менеджер:
 irm https://raw.githubusercontent.com/nnxlxde-stack/moon-setup/main/install-all.ps1 | iex
+irm https://raw.githubusercontent.com/nnxlxde-stack/moon-setup/main/moon-manage.ps1 | iex
 
-# Или только .vsix:
+# Только расширение (закройте редактор перед установкой):
 # https://github.com/nnxlxde-stack/moon-vscode/releases/latest
-code --install-extension vscode-moon-0.3.2.vsix
+code-insiders --install-extension vscode-moon-0.3.2.vsix
 
 # LSP: moon lsp (после install-all.ps1 или swift build)
 # Переопределение: moon.languageServerPath</pre>
