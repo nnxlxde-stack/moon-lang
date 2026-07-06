@@ -23,24 +23,40 @@ private func isUpperName(_ name: String) -> Bool {
     return first == first.uppercased().first
 }
 
+private let knownTypeVarNames: Set<String> = ["msg", "model"]
+
+private func isTypeVarName(_ name: String) -> Bool {
+    if isUpperName(name) { return false }
+    if name.count == 1, let first = name.first, first == first.lowercased().first {
+        return true
+    }
+    return knownTypeVarNames.contains(name)
+}
+
 private func parseTypeApp(_ ts: TokenStream) throws -> TypeSpec {
     let start = ts.peek()
     let head = try parseTypeAtom(ts)
+    if case .tuple = head { return head }
+    if case .list = head { return head }
     var args: [TypeSpec] = []
 
     while true {
-        if ts.at(.ident),
-           !isUpperName(ts.peek().value ?? ""),
-           (ts.peek(offset: 1).kind == .equals || ts.peek(offset: 2).kind == .equals) {
-            break
+        if ts.at(.ident) || ts.at(.kwModel) {
+            if ts.peek(offset: 1).kind == .colon, ts.peek(offset: 2).kind == .colon {
+                break
+            }
+            if !isUpperName(ts.peek().value ?? ""),
+               (ts.peek(offset: 1).kind == .equals || ts.peek(offset: 2).kind == .equals) {
+                break
+            }
         }
         if ts.at(.lparen) || ts.at(.lbracket) {
             args.append(try parseTypeAtom(ts))
             continue
         }
-        if !ts.at(.ident) { break }
+        if !ts.at(.ident), !ts.at(.kwModel) { break }
         let name = ts.peek().value ?? ""
-        if isUpperName(name) || (name.count == 1 && name == name.lowercased()) {
+        if isUpperName(name) || isTypeVarName(name) || ts.at(.kwModel) {
             args.append(try parseTypeAtom(ts))
             continue
         }
@@ -88,7 +104,7 @@ private func parseTypeAtom(_ ts: TokenStream) throws -> TypeSpec {
         return .tuple(elements: elements, span: ts.makeSpan(start: start, end: end))
     }
 
-    if ts.at(.ident) {
+    if ts.at(.ident) || ts.at(.kwModel) {
         let tok = ts.advance()
         return .varType(name: tok.value ?? "", span: ts.makeSpan(start: start, end: tok))
     }

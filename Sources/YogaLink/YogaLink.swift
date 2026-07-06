@@ -1,0 +1,1 @@
+// Links the vendored Yoga C++ core without exposing its headers to Swift importers.

@@ -34,6 +34,14 @@ private struct InferResult {
     var subst: [Int: MoonType]
 }
 
+public func registerTopLevelDeclarations(_ program: Program, env: inout TypeEnv) {
+    for decl in program.declarations {
+        if case .model(let m, _) = decl { registerModel(&env, m) }
+        if case .data(let d, _) = decl { registerData(&env, d) }
+        if case .function(let f, _) = decl, f.signature != nil { registerFunctionSig(&env, f) }
+    }
+}
+
 public func checkProgram(_ program: Program, env: inout TypeEnv) -> CheckResult {
     var errors: [TypeError] = []
     var subst: [Int: MoonType] = [:]
@@ -52,17 +60,11 @@ public func checkProgram(_ program: Program, env: inout TypeEnv) -> CheckResult 
         }
     }
 
-    for decl in program.declarations {
-        if case .model(let m, _) = decl { registerModel(&env, m) }
-        if case .data(let d, _) = decl { registerData(&env, d) }
-    }
+    registerTopLevelDeclarations(program, env: &env)
 
     for decl in program.declarations {
         if case .agent(let a, let span) = decl {
             run(span) { registerAgent(&env, a) }
-        }
-        if case .function(let f, let span) = decl, f.signature != nil {
-            run(span) { registerFunctionSig(&env, f) }
         }
     }
 
@@ -141,6 +143,15 @@ private func registerData(_ env: inout TypeEnv, _ decl: DataDecl) {
             fn(t, acc)
         }
         env.values[c.name] = Scheme(vars: [], type: conType)
+        if !c.fields.isEmpty {
+            env.constructors[c.name] = TypeConstructor(
+                name: c.name,
+                params: decl.typeParams,
+                kind: .data,
+                fields: c.fields,
+                dataParent: decl.name
+            )
+        }
     }
 }
 
@@ -456,7 +467,12 @@ private func checkExpr(_ env: TypeEnv, _ expr: Expression, supply: @escaping () 
                 subst = composeSubst(subst, try unify(applySubst(subst, exp.type), expected.type, span: field.span))
             }
         }
-        let resultType = prim(name, args: tc.params.map { paramSubst[$0] ?? prim($0) })
+        let resultType: MoonType
+        if let parent = tc.dataParent {
+            resultType = prim(parent, args: tc.params.map { paramSubst[$0] ?? prim($0) })
+        } else {
+            resultType = prim(name, args: tc.params.map { paramSubst[$0] ?? prim($0) })
+        }
         return InferResult(type: resultType, subst: subst)
 
     case .list(let elements, _):

@@ -595,8 +595,17 @@ private let repoRoot: URL = {
     #expect(modelToTier("deepseek-v4-pro") == .pro)
 }
 
+@Test func parseNestedArrowTupleType() throws {
+    let src = """
+    f :: Int -> Int -> (Int, Cmd CounterMsg)
+    f x y z = 0
+    """
+    let program = try MoonParser().parse(src)
+    #expect(program.declarations.count == 1)
+}
+
 @Test func typecheckExamples() throws {
-    for name in ["code-analyzer", "code-reviewer", "doc-summarizer", "pr-triage", "requirements-check"] {
+    for name in ["code-analyzer", "code-reviewer", "doc-summarizer", "pr-triage", "requirements-check", "ui-counter"] {
         let examplePath = repoRoot.appendingPathComponent("examples/\(name).moon")
         let src = try String(contentsOf: examplePath, encoding: .utf8)
         let program = try MoonParser().parse(src)
