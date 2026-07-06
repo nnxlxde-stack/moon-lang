@@ -37,7 +37,7 @@
   <header class="moon-hero" id="intro">
     <div class="container">
       <div class="moon-hero-moon" aria-hidden="true"></div>
-      <span class="badge badge-moon mb-3">v0.3.0-swift-phase9 · AI-native · Haskell-inspired</span>
+      <span class="badge badge-moon mb-3">v0.3.0-swift-phase10 · AI-native · Haskell-inspired</span>
       <h1>The Moon Language</h1>
       <p class="lead col-lg-8 mx-auto mt-3">
         Язык для описания <strong>LLM-агентов</strong>, типизированных моделей данных,
@@ -68,6 +68,7 @@
         <a class="moon-toc-link" href="#intro">Обзор</a>
         <a class="moon-toc-link" href="#philosophy">Философия</a>
         <a class="moon-toc-link" href="#architecture">Архитектура</a>
+        <a class="moon-toc-link" href="#ecosystem">Экосистема</a>
         <a class="moon-toc-link" href="#quickstart">Быстрый старт</a>
       </div>
 
@@ -177,6 +178,40 @@
         </div>
       </section>
 
+      <!-- Ecosystem -->
+      <section class="doc-section" id="ecosystem">
+        <span class="section-label">Репозитории</span>
+        <h2>Экосистема Moon</h2>
+        <p>
+          Проект разделён на три репозитория. Этот сайт документирует язык и toolchain из
+          <strong>moon-lang</strong>; расширение редактора и спецификация пакетов живут отдельно.
+        </p>
+        <table class="moon-table">
+          <thead>
+            <tr><th>Репозиторий</th><th>Назначение</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href="https://github.com/nnxlxde-stack/moon-lang" target="_blank" rel="noopener">moon-lang</a></td>
+              <td>Интерпретатор, CLI, LSP, stdlib, примеры, тесты (74)</td>
+            </tr>
+            <tr>
+              <td><a href="https://github.com/nnxlxde-stack/moon-vscode" target="_blank" rel="noopener">moon-vscode</a></td>
+              <td>Расширение VS Code / Cursor (подсветка, LSP, Build/Run)</td>
+            </tr>
+            <tr>
+              <td><a href="https://github.com/nnxlxde-stack/moon-pkg" target="_blank" rel="noopener">moon-pkg</a></td>
+              <td>Спецификация пакетного реестра, фикстуры, <code>moon.pkg.json</code></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="moon-callout">
+          Исторический TypeScript/Bun toolchain сохранён в ветке
+          <a href="https://github.com/nnxlxde-stack/moon-lang/tree/legacy" target="_blank" rel="noopener"><code>legacy</code></a>
+          репозитория moon-lang.
+        </div>
+      </section>
+
       <!-- Quickstart -->
       <section class="doc-section" id="quickstart">
         <span class="section-label">Старт</span>
@@ -184,18 +219,19 @@
 
         <h3>Требования</h3>
         <ul>
-          <li><strong>Swift 6.3+</strong> — основной toolchain (Windows, macOS, Linux)</li>
-          <li><a href="https://bun.sh" target="_blank" rel="noopener">Bun</a> 1.1+ — legacy TypeScript прототип и VS Code extension</li>
-          <li>Ключ <code>DEEPSEEK_API_KEY</code> — для реальных LLM-вызовов (пока только legacy runtime)</li>
+          <li><strong>Swift 6.3+</strong> — toolchain (Windows, macOS, Linux)</li>
+          <li><code>DEEPSEEK_API_KEY</code> — для реальных LLM-вызовов (<code>moon run --no-mock</code>)</li>
+          <li><code>GITHUB_TOKEN</code> — для реальных вызовов <code>Core.GitHub</code> (опционально)</li>
+          <li><a href="https://bun.sh" target="_blank" rel="noopener">Bun</a> 1.1+ — только для сборки расширения <a href="#vscode">moon-vscode</a></li>
         </ul>
 
-        <h3>Swift toolchain</h3>
+        <h3>Установка и сборка</h3>
         <div class="moon-code-block">
           <div class="moon-code-header">
             <span class="moon-code-lang">shell</span>
             <button class="moon-code-copy" type="button">Copy</button>
           </div>
-          <pre>git clone https://github.com/moon-lang/moon-lang.git
+          <pre>git clone https://github.com/nnxlxde-stack/moon-lang.git
 cd moon-lang
 swift build
 swift test
@@ -207,19 +243,6 @@ moon plan examples/code-analyzer.moon
 moon run --mock --target analyzer
 moon build
 moon format examples/pr-triage.moon --write</pre>
-        </div>
-
-        <h3>Legacy TypeScript (полный runtime)</h3>
-        <div class="moon-code-block">
-          <div class="moon-code-header">
-            <span class="moon-code-lang">shell</span>
-            <button class="moon-code-copy" type="button">Copy</button>
-          </div>
-          <pre>bun install
-bun run test:legacy
-
-bun run legacy:check examples/code-analyzer.moon
-bun run legacy:run -- --mock</pre>
         </div>
 
         <h3>Минимальная программа</h3>
@@ -651,7 +674,9 @@ runtime:
         <h2>CLI <code>moon</code></h2>
         <p>
           Основной исполняемый файл собирается из SwiftPM (<code>swift build</code>).
-          Версия toolchain: <code>0.3.0-swift-phase9</code>. LSP: incremental sync, <code>moon-symbols.json</code>, Moonfile support, prompt preview.
+          Версия toolchain: <code>0.3.0-swift-phase10</code> (74 теста).
+          LSP: incremental sync, <code>moon-symbols.json</code>, Moonfile support, prompt preview, moon-docs hover.
+          Токенизатор: нативный Swift BPE из <code>deepseek-tokenizer/tokenizer.json</code>.
         </p>
         <table class="moon-table">
           <thead><tr><th>Команда</th><th>Описание</th></tr></thead>
@@ -671,9 +696,11 @@ runtime:
           </tbody>
         </table>
         <div class="moon-callout moon-callout-moon">
-          <strong>Phase 7:</strong> Moonfile секции <code>providers</code>, <code>runtime</code>, <code>models</code>
-          подхватываются в <code>moon run</code>; поддержаны <code>routes_to</code>, <code>assemblePrompt</code>
-          и оценка токенов. Для <code>--no-mock</code> нужен <code>DEEPSEEK_API_KEY</code>.
+          <strong>Phase 10:</strong> нативный Swift-токенизатор, multi-host registry
+          (<code>github.com</code>, <code>gitlab.com</code>, self-hosted HTTPS git).
+          Для <code>--no-mock</code> нужен <code>DEEPSEEK_API_KEY</code>.
+          Спецификация пакетов — в репозитории
+          <a href="https://github.com/nnxlxde-stack/moon-pkg" target="_blank" rel="noopener">moon-pkg</a>.
         </div>
         <div class="moon-code-block">
           <div class="moon-code-header"><span class="moon-code-lang">shell</span><button class="moon-code-copy" type="button">Copy</button></div>
@@ -683,8 +710,9 @@ moon run --target analyzer --mock
 # Сборка всех targets
 moon build
 
-# Registry
-moon add github.com/moon-lang/review-kit@1.0.0
+# Registry (см. moon-pkg)
+moon add github.com/org/review-kit@0.1.0
+moon add gitlab.com/acme/toolkit@2.0.0
 moon vendor
 moon publish
 
@@ -711,15 +739,19 @@ moon format examples/pr-triage.moon --write</pre>
       <section class="doc-section" id="vscode">
         <h2>VS Code / Cursor</h2>
         <p>
-          Расширение <strong>vscode-moon</strong> включает подсветку, LSP, автодополнение,
-          hover-документацию, форматирование, preview промптов и команды Build/Run.
+          Расширение <strong>vscode-moon</strong> вынесено в отдельный репозиторий
+          <a href="https://github.com/nnxlxde-stack/moon-vscode" target="_blank" rel="noopener">moon-vscode</a>.
+          Подсветка, LSP, автодополнение, hover, форматирование, preview промптов и команды Build/Run.
         </p>
         <div class="moon-code-block">
           <div class="moon-code-header"><span class="moon-code-lang">shell</span><button class="moon-code-copy" type="button">Copy</button></div>
-          <pre>bun run vscode:package
-code --install-extension legacy/packages/vscode-moon/vscode-moon-0.2.2.vsix
+          <pre>git clone https://github.com/nnxlxde-stack/moon-vscode.git
+cd moon-vscode
+bun install && bun run package
+code --install-extension vscode-moon-0.3.0.vsix
 
-# Swift LSP: moon.languageServerPath → .build/debug/moon (аргумент lsp)</pre>
+# LSP по умолчанию: .build/debug/moon lsp (после swift build в проекте Moon)
+# Переопределение: moon.languageServerPath</pre>
         </div>
         <h4>Языки в редакторе</h4>
         <ul>
@@ -730,7 +762,7 @@ code --install-extension legacy/packages/vscode-moon/vscode-moon-0.2.2.vsix
         <table class="moon-table">
           <thead><tr><th>Настройка</th><th>Описание</th></tr></thead>
           <tbody>
-            <tr><td><code>moon.languageServerPath</code></td><td>Путь к LSP (пусто = bundled server)</td></tr>
+            <tr><td><code>moon.languageServerPath</code></td><td>Путь к <code>moon</code> CLI (пусто = auto-detect в workspace)</td></tr>
             <tr><td><code>moon.logging.enabled</code></td><td>Логи в Output → Moon</td></tr>
             <tr><td><code>moon.ai.inlineCompletions.enabled</code></td><td>AI ghost-text (нужен API key)</td></tr>
             <tr><td><code>moon.build.defaultTarget</code></td><td>Target для Build/Run</td></tr>
@@ -753,7 +785,9 @@ code --install-extension legacy/packages/vscode-moon/vscode-moon-0.2.2.vsix
     <p class="mb-1">The Moon Language · Документация</p>
     <p class="small text-muted mb-0">
       <a href="grammar.ebnf">grammar.ebnf</a> ·
-      <a href="https://github.com/moon-lang/moon-lang">GitHub</a>
+      <a href="https://github.com/nnxlxde-stack/moon-lang">moon-lang</a> ·
+      <a href="https://github.com/nnxlxde-stack/moon-vscode">moon-vscode</a> ·
+      <a href="https://github.com/nnxlxde-stack/moon-pkg">moon-pkg</a>
     </p>
   </footer>
 
