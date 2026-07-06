@@ -3,8 +3,53 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Полная документация по языку Moon и манифесту Moonfile — AI-native язык для агентов, анализаторов и LLM-пайплайнов.">
-  <title>Moon Language — Документация</title>
+  <title>Moon Language — AI-native язык для LLM-агентов | Документация</title>
+  <meta name="description" content="Moon Language — AI-native язык программирования для LLM-агентов, типизированных моделей, монадических пайплайнов и Moonfile. CLI, LSP, VS Code, registry пакетов.">
+  <meta name="keywords" content="Moon Language, AI programming language, LLM agents, Moonfile, Haskell-inspired, code analyzer, code reviewer, DeepSeek, language server, LSP, VS Code extension, moon-lang">
+  <meta name="author" content="Moon Language">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <link rel="canonical" href="https://nnxlxde-stack.github.io/moon-lang/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Moon Language">
+  <meta property="og:title" content="Moon Language — AI-native язык для LLM-агентов">
+  <meta property="og:description" content="Документация Moon: агенты, модели, do-блоки, Storm, Moonfile, CLI moon, LSP и экосистема moon-vscode / moon-pkg.">
+  <meta property="og:url" content="https://nnxlxde-stack.github.io/moon-lang/">
+  <meta property="og:locale" content="ru_RU">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Moon Language — Документация">
+  <meta name="twitter:description" content="AI-native язык для LLM-агентов, анализаторов кода и мульти-агентных пайплайнов.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "name": "Moon Language Documentation",
+        "url": "https://nnxlxde-stack.github.io/moon-lang/",
+        "inLanguage": "ru",
+        "description": "Официальная документация языка Moon и манифеста Moonfile"
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "Moon Language",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Windows, macOS, Linux",
+        "softwareVersion": "0.3.0",
+        "description": "AI-native язык для описания LLM-агентов, типизированных моделей и монадических пайплайнов",
+        "url": "https://github.com/nnxlxde-stack/moon-lang",
+        "downloadUrl": "https://github.com/nnxlxde-stack/moon-lang/releases/latest",
+        "license": "https://opensource.org/licenses/MIT"
+      },
+      {
+        "@type": "TechArticle",
+        "headline": "Moon Language — справочник языка и Moonfile",
+        "url": "https://nnxlxde-stack.github.io/moon-lang/",
+        "inLanguage": "ru",
+        "author": { "@type": "Organization", "name": "Moon Language" }
+      }
+    ]
+  }
+  </script>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
   <link rel="stylesheet" href="assets/moon.css">
 </head>
@@ -37,8 +82,8 @@
   <header class="moon-hero" id="intro">
     <div class="container">
       <div class="moon-hero-moon" aria-hidden="true"></div>
-      <span class="badge badge-moon mb-3">v0.3.0-swift-phase10 · AI-native · Haskell-inspired</span>
-      <h1>The Moon Language</h1>
+      <span class="badge badge-moon mb-3">v0.3.0-swift-phase11 · AI-native · Haskell-inspired</span>
+      <h1>Moon Language — AI-native язык для LLM-агентов</h1>
       <p class="lead col-lg-8 mx-auto mt-3">
         Язык для описания <strong>LLM-агентов</strong>, типизированных моделей данных,
         монадических пайплайнов и мульти-агентных дебатов — с манифестом проекта
@@ -221,15 +266,27 @@
         <span class="section-label">Старт</span>
         <h2>Быстрый старт</h2>
 
+        <h3>Windows — установка одной командой</h3>
+        <p>Рекомендуемый способ: <strong>moon-setup</strong> скачивает <code>moon.exe</code>, Swift runtime и stdlib в <code>%APPDATA%\Moon</code> и добавляет в PATH.</p>
+        <div class="moon-code-block">
+          <div class="moon-code-header">
+            <span class="moon-code-lang">powershell</span>
+            <button class="moon-code-copy" type="button">Copy</button>
+          </div>
+          <pre>irm https://raw.githubusercontent.com/nnxlxde-stack/moon-setup/main/install-all.ps1 | iex
+moon version
+moon check examples/code-analyzer.moon</pre>
+        </div>
+
         <h3>Требования</h3>
         <ul>
-          <li><strong>Swift 6.3+</strong> — toolchain (Windows, macOS, Linux)</li>
+          <li><strong>Windows 10+</strong> — автоустановка через <a href="https://github.com/nnxlxde-stack/moon-setup" target="_blank" rel="noopener">moon-setup</a> (без Swift SDK)</li>
+          <li><strong>Swift 6.3+</strong> — только для сборки из исходников (macOS, Linux, Windows)</li>
           <li><code>DEEPSEEK_API_KEY</code> — для реальных LLM-вызовов (<code>moon run --no-mock</code>)</li>
           <li><code>GITHUB_TOKEN</code> — для реальных вызовов <code>Core.GitHub</code> (опционально)</li>
-          <li><a href="https://bun.sh" target="_blank" rel="noopener">Bun</a> 1.1+ — только для сборки расширения <a href="#vscode">moon-vscode</a></li>
         </ul>
 
-        <h3>Установка и сборка</h3>
+        <h3>Сборка из исходников</h3>
         <div class="moon-code-block">
           <div class="moon-code-header">
             <span class="moon-code-lang">shell</span>
@@ -678,7 +735,8 @@ runtime:
         <h2>CLI <code>moon</code></h2>
         <p>
           Основной исполняемый файл собирается из SwiftPM (<code>swift build</code>).
-          Версия toolchain: <code>0.3.0-swift-phase10</code> (74 теста).
+          Версия toolchain: <code>0.3.0-swift-phase11</code> (77 тестов).
+          Windows: установка в <code>%APPDATA%\Moon</code> через <a href="https://github.com/nnxlxde-stack/moon-setup" target="_blank" rel="noopener">moon-setup</a>.
           LSP: incremental sync, <code>moon-symbols.json</code>, Moonfile support, prompt preview, moon-docs hover.
           Токенизатор: нативный Swift BPE из <code>deepseek-tokenizer/tokenizer.json</code>.
         </p>
@@ -700,7 +758,7 @@ runtime:
           </tbody>
         </table>
         <div class="moon-callout moon-callout-moon">
-          <strong>Phase 10:</strong> нативный Swift-токенизатор, multi-host registry
+          <strong>Phase 11:</strong> нативный Swift-токенизатор, multi-host registry
           (<code>github.com</code>, <code>gitlab.com</code>, self-hosted HTTPS git).
           Для <code>--no-mock</code> нужен <code>DEEPSEEK_API_KEY</code>.
           Спецификация пакетов — в репозитории
@@ -749,13 +807,14 @@ moon format examples/pr-triage.moon --write</pre>
         </p>
         <div class="moon-code-block">
           <div class="moon-code-header"><span class="moon-code-lang">shell</span><button class="moon-code-copy" type="button">Copy</button></div>
-          <pre># Рекомендуется: moon-setup (install-all.ps1 / install-all.sh)
+          <pre># Windows (рекомендуется):
+irm https://raw.githubusercontent.com/nnxlxde-stack/moon-setup/main/install-all.ps1 | iex
 
-# Или скачать .vsix:
+# Или только .vsix:
 # https://github.com/nnxlxde-stack/moon-vscode/releases/latest
-code --install-extension vscode-moon-0.3.0.vsix
+code --install-extension vscode-moon-0.3.2.vsix
 
-# LSP: .build/debug/moon lsp (после swift build)
+# LSP: moon lsp (после install-all.ps1 или swift build)
 # Переопределение: moon.languageServerPath</pre>
         </div>
         <h4>Языки в редакторе</h4>

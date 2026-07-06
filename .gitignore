@@ -3,6 +3,9 @@ node_modules/
 .swiftpm/
 moon-symbols.json
 *.vsix
+moon-*-windows-x86_64.exe
+moon-runtime-*.zip
+moon-stdlib-*.zip
 .env
 .moon/
 agent-tools/

@@ -20,28 +20,42 @@ jobs:
       - name: Build release
         run: swift build -c release -v
 
-      - name: Locate moon binary
-        id: moon
+      - name: Package release assets
+        id: assets
         shell: pwsh
         run: |
+          $tag = $env:GITHUB_REF_NAME
           $candidates = @(
             ".build/x86_64-unknown-windows-msvc/release/moon.exe",
-            ".build/release/moon.exe",
-            ".build/debug/moon.exe"
+            ".build/release/moon.exe"
           )
-          foreach ($path in $candidates) {
-            if (Test-Path $path) {
-              $dest = "moon-$env:GITHUB_REF_NAME-windows-x86_64.exe"
-              Copy-Item $path $dest
-              "path=$dest" >> $env:GITHUB_OUTPUT
-              & $path version
-              exit 0
-            }
-          }
-          throw "moon.exe not found after build"
+          $moonSrc = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $moonSrc) { throw "moon.exe not found after build" }
+
+          $moonAsset = "moon-$tag-windows-x86_64.exe"
+          Copy-Item $moonSrc $moonAsset
+          & ".\$moonSrc" version
+
+          $runtimeRoot = Join-Path $env:LOCALAPPDATA "Programs\Swift\Runtimes"
+          $runtimeBin = Get-ChildItem $runtimeRoot -Directory -ErrorAction SilentlyContinue |
+            ForEach-Object { Join-Path $_.FullName "usr/bin" } |
+            Where-Object { Test-Path $_ } |
+            Select-Object -First 1
+          if (-not $runtimeBin) { throw "Swift runtime bin not found" }
+
+          $runtimeAsset = "moon-runtime-$tag-windows-x86_64.zip"
+          Compress-Archive -Path (Join-Path $runtimeBin "*.dll") -DestinationPath $runtimeAsset -Force
+
+          $stdlibAsset = "moon-stdlib-$tag.zip"
+          Compress-Archive -Path "stdlib" -DestinationPath $stdlibAsset -Force
+
+          "files=$moonAsset,$runtimeAsset,$stdlibAsset" >> $env:GITHUB_OUTPUT
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ steps.moon.outputs.path }}
+          files: |
+            moon-${{ github.ref_name }}-windows-x86_64.exe
+            moon-runtime-${{ github.ref_name }}-windows-x86_64.zip
+            moon-stdlib-${{ github.ref_name }}.zip
           generate_release_notes: true

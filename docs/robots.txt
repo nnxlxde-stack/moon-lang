@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://nnxlxde-stack.github.io/moon-lang/sitemap.xml

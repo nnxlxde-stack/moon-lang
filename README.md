@@ -1,5 +1,11 @@
 # Moon Language
 
+[![Release](https://img.shields.io/github/v/release/nnxlxde-stack/moon-lang?style=flat-square&logo=github)](https://github.com/nnxlxde-stack/moon-lang/releases/latest)
+[![License: MIT](https://img.shields.io/github/license/nnxlxde-stack/moon-lang?style=flat-square)](LICENSE)
+[![Release build](https://img.shields.io/github/actions/workflow/status/nnxlxde-stack/moon-lang/release.yml?label=release&style=flat-square)](https://github.com/nnxlxde-stack/moon-lang/actions/workflows/release.yml)
+[![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-7c5cff?style=flat-square)](https://nnxlxde-stack.github.io/moon-lang/)
+[![Stars](https://img.shields.io/github/stars/nnxlxde-stack/moon-lang?style=flat-square&logo=github)](https://github.com/nnxlxde-stack/moon-lang/stargazers)
+
 **Moon** — AI-native язык программирования для описания LLM-агентов, типизированных моделей данных и монадических пайплайнов. Синтаксис вдохновлён Haskell; конфигурация проекта — манифестом **Moonfile** в духе SwiftPM.
 
 **Toolchain:** `0.3.0-swift-phase11` · Swift 6.3+ · 77 тестов
@@ -19,12 +25,10 @@
 
 Исторический TypeScript/Bun toolchain — ветка [`legacy`](https://github.com/nnxlxde-stack/moon-lang/tree/legacy).
 
-### Установка одной командой
+### Установка
 
 ```powershell
-git clone https://github.com/nnxlxde-stack/moon-setup.git
-cd moon-setup
-.\install-all.ps1
+irm https://raw.githubusercontent.com/nnxlxde-stack/moon-setup/main/install-all.ps1 | iex
 ```
 
 ---
@@ -40,23 +44,23 @@ cd moon-setup
 
 ## Быстрый старт
 
-### Установка одной командой
+### Установка (Windows, без сборки)
 
 ```powershell
-git clone https://github.com/nnxlxde-stack/moon-setup.git
-cd moon-setup
-.\install-all.ps1
+irm https://raw.githubusercontent.com/nnxlxde-stack/moon-setup/main/install-all.ps1 | iex
 ```
+
+Устанавливает **moon** + Swift runtime в `%APPDATA%\Moon` и добавляет в PATH пользователя.
 
 Подробнее — [moon-setup](https://github.com/nnxlxde-stack/moon-setup).
 
 ### Требования
 
-- **Swift 6.3+** (Windows/macOS/Linux)
+- Windows 10+ (автоустановка) или **Swift 6.3+** для сборки из исходников
 - `DEEPSEEK_API_KEY` — для реальных LLM-вызовов (`moon run --no-mock`)
 - `GITHUB_TOKEN` — для реальных GitHub API вызовов (`Core.GitHub`)
 
-**Бинарник Windows (без сборки):** скачайте `moon-v0.3.0-windows-x86_64.exe` из [GitHub Releases](https://github.com/nnxlxde-stack/moon-lang/releases/latest). Требуется Swift runtime в PATH.
+**Ручная установка:** [GitHub Releases](https://github.com/nnxlxde-stack/moon-lang/releases/latest) — `moon-*.exe` + `moon-runtime-*.zip`
 
 ```bash
 git clone https://github.com/nnxlxde-stack/moon-lang.git
@@ -196,7 +200,8 @@ moon-lang/
 
 | Ресурс | Описание |
 |--------|----------|
-| [**docs/index.html**](docs/index.html) | Полная интерактивная документация |
+| [**Документация (GitHub Pages)**](https://nnxlxde-stack.github.io/moon-lang/) | Полная интерактивная документация |
+| [**docs/index.html**](docs/index.html) | Локальная копия документации |
 | [docs/grammar.ebnf](docs/grammar.ebnf) | EBNF-грамматика v0.3 |
 | [docs/model-pricing.json](docs/model-pricing.json) | Таблица цен моделей |
 
