@@ -3,12 +3,12 @@ import Foundation
 
 private final class HostController: @unchecked Sendable {
     let loop: UIRuntimeLoop
-    let backend: WinGDIRenderBackend
+    let backend: WinD2DRenderBackend
     let window: WinWindow
 
     init(session: MoonAppSession) {
         self.loop = UIRuntimeLoop(session: session)
-        self.backend = WinGDIRenderBackend()
+        self.backend = WinD2DRenderBackend()
         self.window = WinWindow()
     }
 
@@ -20,6 +20,18 @@ private final class HostController: @unchecked Sendable {
             try backend.present()
         } catch {
             fputs("moon-ui: \(error)\n", stderr)
+        }
+    }
+
+    func mouseMove(x: Float, y: Float) {
+        if loop.handleMouseMove(x: x, y: y) {
+            window.invalidate()
+        }
+    }
+
+    func mouseDown(x: Float, y: Float) {
+        if loop.handleMouseDown(x: x, y: y) {
+            window.invalidate()
         }
     }
 
@@ -77,6 +89,14 @@ enum WinUIHost {
 
         controller.window.onPaint = {
             controller.paint()
+        }
+
+        controller.window.onMouseMove = { x, y in
+            controller.mouseMove(x: x, y: y)
+        }
+
+        controller.window.onMouseDown = { x, y in
+            controller.mouseDown(x: x, y: y)
         }
 
         controller.window.onClick = { x, y in

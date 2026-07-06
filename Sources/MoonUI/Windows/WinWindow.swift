@@ -11,6 +11,8 @@ final class WinWindow {
 
     var onPaint: (() -> Void)?
     var onResize: ((Int32, Int32) -> Void)?
+    var onMouseMove: ((Float, Float) -> Void)?
+    var onMouseDown: ((Float, Float) -> Void)?
     var onClick: ((Float, Float) -> Void)?
     var onClose: (() -> Void)?
 
@@ -112,6 +114,16 @@ final class WinWindow {
             let hdc = BeginPaint(hwnd, &ps)
             EndPaint(hwnd, &ps)
             _ = hdc
+            return 0
+        case UINT(WM_MOUSEMOVE):
+            let x = Float(Int16(lParam & 0xFFFF))
+            let y = Float(Int16((lParam >> 16) & 0xFFFF))
+            window.onMouseMove?(x, y)
+            return 0
+        case UINT(WM_LBUTTONDOWN):
+            let x = Float(Int16(lParam & 0xFFFF))
+            let y = Float(Int16((lParam >> 16) & 0xFFFF))
+            window.onMouseDown?(x, y)
             return 0
         case UINT(WM_LBUTTONUP):
             let x = Float(Int16(lParam & 0xFFFF))

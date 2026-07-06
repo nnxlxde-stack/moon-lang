@@ -39,18 +39,18 @@
 
 - [x] Добавить target в `Package.swift`: `MoonUI` зависит от `MoonRuntime`, `MoonYoga`, `WinSDK` (встроенный модуль Swift на Windows).
 - [x] Окно и message pump: `WinSDK` (`CreateWindowExW`, `WM_PAINT`, `WM_SIZE`, `WM_LBUTTONUP`).
-- [ ] Рендер-девайс: D3D12 swapchain + `D3D11On12` + Direct2D/DirectWrite (сейчас MVP на GDI double-buffer; `RenderBackend` готов к замене).
+- [x] Рендер-девайс: Direct2D/DirectWrite через `MoonD2D` C++ bridge (`ID2D1HwndRenderTarget` + `IDWriteTextLayout`; D3D12/`D3D11On12` — следующий шаг).
 - [x] Реализовать `UIRuntimeLoop`: держит `model`, вызывает `update`/`view` через `MoonRuntime`, диспетчит `NoCmd`/`Batch`/`Delay`/`SaveFile` (заглушки для `RunAgent`/`RunStorm`).
 - [x] `SceneDiff`: сравнение retained-сцены, dirty rects (MVP: full-frame fallback через invalidate).
 - [x] Хит-тестинг: linear scan по bounding box'ам Yoga-layout.
 - [x] `moon run` ветвится на `App` → `MoonUI` вместо `runProgram`.
-- [ ] Критерий готовности (полный): `examples/ui-counter.moon` — нативное окно, клики, Direct2D без миганий (GDI MVP работает на Windows).
+- [x] Критерий готовности (полный): `examples/ui-counter.moon` — нативное окно, клики, Direct2D без миганий.
 
 ## Phase 4 — Текст и дефолтная тема
 
-- [ ] `Text`/`Button` label рендерятся через DirectWrite (`IDWriteTextLayout`) — шейпинг и перенос строк бесплатно, не пишем свой text engine.
-- [ ] Одна встроенная палитра/шрифт/отступы (константы в `MoonUI`, не конфигурируемые в v0.1) — hover/pressed состояние кнопки как два предустановленных Direct2D brush.
-- [ ] Критерий готовности: скриншот `ui-counter.moon` выглядит как законченный мини-продукт (не системные серые Win32-кнопки по умолчанию).
+- [x] `Text`/`Button` label рендерятся через DirectWrite (`IDWriteTextLayout`) — шейпинг и перенос строк бесплатно, не пишем свой text engine.
+- [x] Одна встроенная палитра/шрифт/отступы (константы в `MoonUI`, не конфигурируемые в v0.1) — hover/pressed состояние кнопки как два предустановленных Direct2D brush.
+- [x] Критерий готовности: скриншот `ui-counter.moon` выглядит как законченный мини-продукт (не системные серые Win32-кнопки по умолчанию).
 
 ## Phase 4.5 — Input и List/скролл (осознанно после MVP)
 

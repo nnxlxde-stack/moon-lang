@@ -5,6 +5,7 @@ import PackageDescription
 private let packageDir = URL(fileURLWithPath: #filePath).deletingLastPathComponent().path
 private let yogaInclude = "\(packageDir)/Vendor/yoga"
 
+
 let package = Package(
     name: "moon",
     platforms: [
@@ -85,8 +86,19 @@ let package = Package(
             ]
         ),
         .target(
+            name: "MoonD2D",
+            path: "Sources/MoonD2D",
+            exclude: ["CAPI"],
+            publicHeadersPath: "include",
+            linkerSettings: [
+                .linkedLibrary("d2d1", .when(platforms: [.windows])),
+                .linkedLibrary("dwrite", .when(platforms: [.windows])),
+                .linkedLibrary("ole32", .when(platforms: [.windows])),
+            ]
+        ),
+        .target(
             name: "MoonUI",
-            dependencies: ["MoonYoga", "MoonRuntime"],
+            dependencies: ["MoonYoga", "MoonRuntime", "MoonD2D"],
             path: "Sources/MoonUI",
             swiftSettings: [
                 .unsafeFlags(["-Xcc", "-fmodule-map-file=\(packageDir)/Sources/MoonYoga/CAPI/module.modulemap"]),
@@ -94,8 +106,7 @@ let package = Package(
                 .unsafeFlags(["-Xfrontend", "-strict-concurrency=minimal"]),
             ],
             linkerSettings: [
-                .linkedLibrary("User32"),
-                .linkedLibrary("Gdi32"),
+                .linkedLibrary("User32", .when(platforms: [.windows])),
             ]
         ),
         .executableTarget(

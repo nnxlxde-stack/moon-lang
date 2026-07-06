@@ -4,6 +4,7 @@ public final class UIRuntimeLoop: @unchecked Sendable {
     private let session: MoonAppSession
     private var scene: SceneNode?
     private var viewport = UIRect(x: 0, y: 0, width: 480, height: 360)
+    private var interaction = InteractionState()
 
     public init(session: MoonAppSession) {
         self.session = session
@@ -32,10 +33,33 @@ public final class UIRuntimeLoop: @unchecked Sendable {
             _ = try await rebuildScene()
         }
         guard let scene else { return }
-        try SceneRenderer.render(scene, backend: backend)
+        try SceneRenderer.render(scene, backend: backend, interaction: interaction)
+    }
+
+    public func handleMouseMove(x: Float, y: Float) -> Bool {
+        guard let currentScene = scene else { return false }
+        let hovered = HitTest.locate(currentScene, x: x, y: y)
+        let hoveredID = hovered?.node.kind == .button ? hovered?.node.id : nil
+        if interaction.hoveredNodeID == hoveredID {
+            return false
+        }
+        interaction.hoveredNodeID = hoveredID
+        return true
+    }
+
+    public func handleMouseDown(x: Float, y: Float) -> Bool {
+        guard let currentScene = scene else { return false }
+        let hit = HitTest.locate(currentScene, x: x, y: y)
+        let pressedID = hit?.node.kind == .button && hit?.node.payload.enabled == true ? hit?.node.id : nil
+        if interaction.pressedNodeID == pressedID {
+            return false
+        }
+        interaction.pressedNodeID = pressedID
+        return true
     }
 
     public func handleClick(x: Float, y: Float) async throws -> Bool {
+        defer { interaction.pressedNodeID = nil }
         guard let currentScene = scene else { return false }
         guard let hit = HitTest.locate(currentScene, x: x, y: y),
               let onPress = hit.node.payload.onPress,
