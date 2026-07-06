@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: swift-actions/setup-swift@v3
+        with:
+          skip-verify-signature: true
+
+      - name: Build release
+        run: swift build -c release -v
+
+      - name: Locate moon binary
+        id: moon
+        shell: pwsh
+        run: |
+          $candidates = @(
+            ".build/x86_64-unknown-windows-msvc/release/moon.exe",
+            ".build/release/moon.exe",
+            ".build/debug/moon.exe"
+          )
+          foreach ($path in $candidates) {
+            if (Test-Path $path) {
+              $dest = "moon-$env:GITHUB_REF_NAME-windows-x86_64.exe"
+              Copy-Item $path $dest
+              "path=$dest" >> $env:GITHUB_OUTPUT
+              & $path version
+              exit 0
+            }
+          }
+          throw "moon.exe not found after build"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.moon.outputs.path }}
+          generate_release_notes: true
