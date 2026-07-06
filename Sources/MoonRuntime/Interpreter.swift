@@ -8,6 +8,7 @@ func evalExpr(_ expr: Expression, _ ctx: RuntimeContext) async throws -> Runtime
     case .varRef(let name, _):
         if let value = ctx.env[name] { return value }
         if isTypeValue(name) { return .symbol(name) }
+        if ctx.constructors.contains(name) { return .symbol(name) }
         if isBuiltin(name, ctx) { return .symbol(name) }
         if ctx.agents[name] != nil { return .symbol(name) }
         if findUserFunction(ctx.program, name) != nil { return .symbol(name) }

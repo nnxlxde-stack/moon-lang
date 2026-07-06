@@ -40,6 +40,7 @@ public func evaluateAppMain(
         program: program,
         agents: collectAgents(program),
         builtins: builtinsFromImports(program),
+        constructors: collectDataConstructors(program),
         llm: llm,
         memory: MemoryManager(longTermPath: runtimeConfig.longTermMemoryPath, metrics: metrics),
         pool: options.workerPool ?? WorkerPool(config: WorkerPoolConfig(

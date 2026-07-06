@@ -39,6 +39,7 @@ public final class RuntimeContext: @unchecked Sendable {
     public var env: [String: RuntimeValue]
     public var effects: [RuntimeEffect]
     public var builtins: Set<String>
+    public var constructors: Set<String>
     public var llm: LlmClient
     public var memory: MemoryManager
     public var pool: WorkerPool
@@ -52,6 +53,7 @@ public final class RuntimeContext: @unchecked Sendable {
         env: [String: RuntimeValue] = [:],
         effects: [RuntimeEffect] = [],
         builtins: Set<String>,
+        constructors: Set<String> = [],
         llm: LlmClient,
         memory: MemoryManager = MemoryManager(),
         pool: WorkerPool = WorkerPool(),
@@ -64,6 +66,7 @@ public final class RuntimeContext: @unchecked Sendable {
         self.env = env
         self.effects = effects
         self.builtins = builtins
+        self.constructors = constructors
         self.llm = llm
         self.memory = memory
         self.pool = pool
@@ -81,6 +84,7 @@ public final class RuntimeContext: @unchecked Sendable {
             env: merged,
             effects: effects,
             builtins: builtins,
+            constructors: constructors,
             llm: llm,
             memory: memory,
             pool: pool,

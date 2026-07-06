@@ -175,6 +175,7 @@ public func runProgram(_ program: Program, options: ProgramRunOptions = ProgramR
         program: program,
         agents: collectAgents(program),
         builtins: builtinsFromImports(program),
+        constructors: collectDataConstructors(program),
         llm: llm,
         memory: MemoryManager(longTermPath: runtimeConfig.longTermMemoryPath, metrics: metrics),
         pool: pool,

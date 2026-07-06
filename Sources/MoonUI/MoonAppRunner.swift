@@ -42,8 +42,8 @@ public struct MoonAppRunner {
             throw MoonUIError.invalidApp("App must provide init, update, and view")
         }
 
-        let (model, _) = try unpackInit(initValue)
         let ctx = try await makeRuntimeContext(program: program, options: options)
+        let (model, _) = try await resolveInit(initValue, ctx: ctx)
         return MoonAppSession(
             ctx: ctx,
             updateFn: updateFn,
@@ -61,6 +61,7 @@ public struct MoonAppRunner {
             program: program,
             agents: collectAgents(program),
             builtins: builtinsFromImports(program),
+            constructors: collectDataConstructors(program),
             llm: llm,
             memory: MemoryManager(longTermPath: runtimeConfig.longTermMemoryPath, metrics: metrics),
             pool: WorkerPool(config: WorkerPoolConfig(
@@ -71,6 +72,14 @@ public struct MoonAppRunner {
             schemas: compiledSchemasForRuntime(program),
             systemSuffix: runtimeConfig.systemSuffix
         )
+    }
+
+    private func resolveInit(_ value: RuntimeValue, ctx: RuntimeContext) async throws -> (RuntimeValue, RuntimeValue) {
+        var resolved = value
+        if case .symbol(let name) = value, let decl = findUserFunction(ctx.program, name) {
+            resolved = try await callUserFunction(decl, args: [], ctx: ctx)
+        }
+        return try unpackInit(resolved)
     }
 
     private func unpackInit(_ value: RuntimeValue) throws -> (RuntimeValue, RuntimeValue) {
