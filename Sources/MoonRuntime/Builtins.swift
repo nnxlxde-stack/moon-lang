@@ -8,6 +8,7 @@ public let coreModuleBuiltins: [String: [String]] = [
     "Core.Memory": ["memory", "recall"],
     "Core.FS": ["readFile", "writeFile", "pathExists", "listDir", "makeDir", "removePath"],
     "Core.Network": ["httpGet", "httpPost", "fetchJson"],
+    "Core.UI": ["showInt"],
     "Core.Tools": [
         "readFile", "saveToFile", "postToSlack", "postSummaryToSlack",
         "when", "mapM", "pure", "fetchUpdatedDocs",
@@ -66,6 +67,9 @@ func runBuiltin(_ name: String, _ arg: RuntimeValue, _ ctx: RuntimeContext) asyn
     case "recall":
         guard case .string(let key) = arg else { throw RuntimeError("recall expects string key") }
         return await ctx.memory.recall(key)
+    case "showInt":
+        if case .int(let n) = arg { return .string(String(n)) }
+        throw RuntimeError("showInt expects Int")
     case "fetchOpenPRs":
         guard case .string(let repo) = arg else { throw RuntimeError("fetchOpenPRs expects repo string") }
         return try await fetchOpenPRsFromGitHub(repo: repo, ctx: ctx)
@@ -278,7 +282,7 @@ private func scopeSymbolName(_ value: RuntimeValue) -> String? {
     }
 }
 
-func runtimeValueDescription(_ value: RuntimeValue) -> String {
+public func runtimeValueDescription(_ value: RuntimeValue) -> String {
     switch value {
     case .null: return "null"
     case .bool(let b): return "\(b)"

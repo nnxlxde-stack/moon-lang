@@ -84,20 +84,50 @@ let package = Package(
                 .unsafeFlags(["-Xcc", "-I\(yogaInclude)"]),
             ]
         ),
-        .executableTarget(name: "MoonCLI", dependencies: [
-            "MoonAST",
-            "MoonLexer",
-            "MoonParser",
-            "MoonPlanner",
-            "MoonTypechecker",
-            "MoonMoonfile",
-            "MoonBuild",
-            "MoonRegistry",
-            "MoonFormatter",
-            "MoonLSP",
-            "MoonRuntime",
-        ]),
+        .target(
+            name: "MoonUI",
+            dependencies: ["MoonYoga", "MoonRuntime"],
+            path: "Sources/MoonUI",
+            swiftSettings: [
+                .unsafeFlags(["-Xcc", "-fmodule-map-file=\(packageDir)/Sources/MoonYoga/CAPI/module.modulemap"]),
+                .unsafeFlags(["-Xcc", "-I\(yogaInclude)"]),
+                .unsafeFlags(["-Xfrontend", "-strict-concurrency=minimal"]),
+            ],
+            linkerSettings: [
+                .linkedLibrary("User32"),
+                .linkedLibrary("Gdi32"),
+            ]
+        ),
+        .executableTarget(
+            name: "MoonCLI",
+            dependencies: [
+                "MoonAST",
+                "MoonLexer",
+                "MoonParser",
+                "MoonPlanner",
+                "MoonTypechecker",
+                "MoonMoonfile",
+                "MoonBuild",
+                "MoonRegistry",
+                "MoonFormatter",
+                "MoonLSP",
+                "MoonRuntime",
+                "MoonUI",
+            ],
+            swiftSettings: [
+                .unsafeFlags(["-Xcc", "-fmodule-map-file=\(packageDir)/Sources/MoonYoga/CAPI/module.modulemap"]),
+                .unsafeFlags(["-Xcc", "-I\(yogaInclude)"]),
+            ]
+        ),
         .testTarget(name: "MoonASTTests", dependencies: ["MoonAST"]),
+        .testTarget(
+            name: "MoonUITests",
+            dependencies: ["MoonUI"],
+            swiftSettings: [
+                .unsafeFlags(["-Xcc", "-fmodule-map-file=\(packageDir)/Sources/MoonYoga/CAPI/module.modulemap"]),
+                .unsafeFlags(["-Xcc", "-I\(yogaInclude)"]),
+            ]
+        ),
         .testTarget(
             name: "MoonYogaTests",
             dependencies: ["MoonYoga"],

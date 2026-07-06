@@ -10,6 +10,7 @@ import MoonPlanner
 import MoonRegistry
 import MoonRuntime
 import MoonTypechecker
+import MoonUI
 
 enum MoonCommand: String {
     case check
@@ -350,6 +351,15 @@ struct MoonCLI {
         do {
             let source = try String(contentsOfFile: resolved.file, encoding: .utf8)
             let program = try MoonParser().parse(source)
+            if isAppMainProgram(program) {
+                let ui = MoonUI()
+                try await ui.run(program: program, options: MoonUIRunOptions(mock: mock))
+                print("OK (ui)")
+                if let targetName = resolved.targetName {
+                    print("target: \(targetName)")
+                }
+                return 0
+            }
             var overrides = RuntimeConfigOverrides(mock: mock)
             if let moonfilePath = findMoonfile(startDir: resolved.projectRoot),
                let moonfile = try? loadMoonfile(path: moonfilePath) {

@@ -283,7 +283,7 @@ private func configDouble(_ value: RuntimeValue?) -> Double? {
     }
 }
 
-func findUserFunction(_ program: Program, _ name: String) -> FunctionDecl? {
+public func findUserFunction(_ program: Program, _ name: String) -> FunctionDecl? {
     for decl in program.declarations {
         if case .function(let fnDecl, _) = decl,
            fnDecl.equations.contains(where: { $0.name == name }) {
@@ -293,7 +293,7 @@ func findUserFunction(_ program: Program, _ name: String) -> FunctionDecl? {
     return nil
 }
 
-func callUserFunction(
+public func callUserFunction(
     _ decl: FunctionDecl,
     args: [RuntimeValue],
     ctx: RuntimeContext,

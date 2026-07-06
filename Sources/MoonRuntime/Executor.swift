@@ -99,7 +99,7 @@ private func tierForMapM(_ mapMFunc: String, _ ctx: RuntimeContext) -> ModelTier
     return .pro
 }
 
-private func applyFn(_ fn: RuntimeValue, _ arg: RuntimeValue, _ ctx: RuntimeContext) async throws -> RuntimeValue {
+func applyFn(_ fn: RuntimeValue, _ arg: RuntimeValue, _ ctx: RuntimeContext) async throws -> RuntimeValue {
     if case .callable(let box) = fn {
         return try await box.fn(arg, ctx)
     }

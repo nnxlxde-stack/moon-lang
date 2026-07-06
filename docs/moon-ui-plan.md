@@ -37,15 +37,14 @@
 
 ## Phase 3 — Новый Swift-таргет `Sources/MoonUI` (окно + рендер + рантайм-цикл)
 
-- [ ] Добавить target в `Package.swift`: `MoonUI` зависит от `MoonRuntime`, `MoonYoga`, системных фреймворков `WinSDK`/`Direct2D`/`DirectWrite` (через модуль `Direct3D12`-биндинг в духе `STREGAsGate/Direct3D12`, проверено на практике в `compnerd/DXSample`).
-- [ ] Окно и message pump: `WinSDK` (`CreateWindowExW`, `WM_PAINT`, `WM_SIZE`, `WM_LBUTTONDOWN`, `WM_CHAR` и т.д.).
-- [ ] Рендер-девайс: D3D12 swapchain (flip-model, vsync) + `D3D11On12CreateDevice` для получения Direct2D-контекста поверх того же D3D12-девайса.
-- [ ] Реализовать `UIRuntimeLoop`: держит `model` в памяти, получает `Msg` из внутриочереди, вызывает `update` (через `MoonRuntime`), при получении `Cmd` — диспетчит:
-  - `RunAgent` / `RunStorm` → существующий `MoonRuntime` agent/storm executor (`--no-mock`), результат заворачивается обратно в `Msg` через ту же очередь (без сериализации — оба конца в одном процессе Swift).
-  - `SaveFile`, `Delay` → простые нативные обработчики.
-- [ ] `SceneDiff`: сравнение нового `Element`-дерева с предыдущей retained-сценой (`SceneNode` из Phase 0) — помечает изменённые/добавленные/удалённые ноды, вызывает Direct2D-перерисовку только затронутых регионов (dirty rects), а не весь кадр.
-- [ ] Хит-тестинг: по bounding box'ам из Yoga-layout (Phase 2) находим, какая нода под курсором/принимает клавиатурный фокус (простой linear scan по retained-дереву для MVP — оптимизация до R-tree откладывается).
-- [ ] Критерий готовности: `examples/ui-counter.moon` открывает нативное Win32-окно, кнопки реагируют на клик мышью, счётчик перерисовывается через Direct2D без миганий (double buffering работает).
+- [x] Добавить target в `Package.swift`: `MoonUI` зависит от `MoonRuntime`, `MoonYoga`, `WinSDK` (встроенный модуль Swift на Windows).
+- [x] Окно и message pump: `WinSDK` (`CreateWindowExW`, `WM_PAINT`, `WM_SIZE`, `WM_LBUTTONUP`).
+- [ ] Рендер-девайс: D3D12 swapchain + `D3D11On12` + Direct2D/DirectWrite (сейчас MVP на GDI double-buffer; `RenderBackend` готов к замене).
+- [x] Реализовать `UIRuntimeLoop`: держит `model`, вызывает `update`/`view` через `MoonRuntime`, диспетчит `NoCmd`/`Batch`/`Delay`/`SaveFile` (заглушки для `RunAgent`/`RunStorm`).
+- [x] `SceneDiff`: сравнение retained-сцены, dirty rects (MVP: full-frame fallback через invalidate).
+- [x] Хит-тестинг: linear scan по bounding box'ам Yoga-layout.
+- [x] `moon run` ветвится на `App` → `MoonUI` вместо `runProgram`.
+- [ ] Критерий готовности (полный): `examples/ui-counter.moon` — нативное окно, клики, Direct2D без миганий (GDI MVP работает на Windows).
 
 ## Phase 4 — Текст и дефолтная тема
 

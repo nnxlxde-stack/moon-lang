@@ -114,7 +114,9 @@ private func fsSchemes() -> [String: Scheme] {
 }
 
 private func uiSchemes() -> [String: Scheme] {
-    [:]
+    [
+        "showInt": scheme(fn(prim("Int"), prim("String"))),
+    ]
 }
 
 private func networkSchemes() -> [String: Scheme] {

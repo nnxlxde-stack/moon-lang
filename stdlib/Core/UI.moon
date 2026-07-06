@@ -126,5 +126,3 @@ foreground c child =
 font :: TextStyle -> Element msg -> Element msg
 font style child = child
 
-showInt :: Int -> String
-showInt _ = ""
