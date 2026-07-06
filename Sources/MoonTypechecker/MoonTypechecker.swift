@@ -1,5 +1,6 @@
 import Foundation
 import MoonAST
+import MoonParser
 import MoonResolver
 import MoonTypes
 
@@ -46,6 +47,16 @@ public struct MoonTypechecker {
                     errors: importErrors.map { "\($0.message) at \($0.line):\($0.column)" }
                 )
             }
+
+            var checkEnv = env
+            for imp in resolved.imports where imp.pathKey == "Core.UI" {
+                guard let path = imp.filePath,
+                      FileManager.default.fileExists(atPath: path),
+                      let source = try? String(contentsOfFile: path, encoding: .utf8),
+                      let stdlibProgram = try? MoonParser().parse(source) else { continue }
+                registerTopLevelDeclarations(stdlibProgram, env: &checkEnv)
+            }
+            env = checkEnv
         }
 
         var checkEnv = env

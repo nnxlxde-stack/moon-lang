@@ -61,8 +61,11 @@ private func lineHasLayoutOpener(tokens: [Token]) -> Bool {
 }
 
 private func lineOpensImplicitConfig(tokens: [Token]) -> Bool {
-    tokens.contains { $0.kind == .kwAgent || $0.kind == .kwModel }
-        && !tokens.contains { $0.kind == .kwWhere }
+    guard let first = tokens.first else { return false }
+    if first.kind == .kwAgent || first.kind == .kwModel {
+        return !tokens.contains { $0.kind == .kwWhere }
+    }
+    return false
 }
 
 public func applyLayout(source: String, rawTokens: [Token]) -> [Token] {

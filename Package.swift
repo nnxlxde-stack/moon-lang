@@ -21,7 +21,7 @@ let package = Package(
         .target(name: "MoonParser", dependencies: ["MoonAST", "MoonLexer"]),
         .target(name: "MoonMoonfile"),
         .target(name: "MoonResolver", dependencies: ["MoonAST", "MoonParser", "MoonTypes", "MoonMoonfile"]),
-        .target(name: "MoonTypechecker", dependencies: ["MoonAST", "MoonTypes", "MoonResolver"]),
+        .target(name: "MoonTypechecker", dependencies: ["MoonAST", "MoonParser", "MoonTypes", "MoonResolver"]),
         .target(name: "MoonSchemaCompiler", dependencies: ["MoonAST"]),
         .target(name: "MoonPlanner", dependencies: ["MoonAST"]),
         .target(name: "MoonBuild", dependencies: [

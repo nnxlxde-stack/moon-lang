@@ -8,6 +8,7 @@ public func coreModuleSchemes(_ path: String) -> [String: Scheme]? {
     case "Core.Analyzers": return analyzersSchemes()
     case "Core.FS": return fsSchemes()
     case "Core.Network": return networkSchemes()
+    case "Core.UI": return uiSchemes()
     default: return nil
     }
 }
@@ -17,7 +18,7 @@ public func isCoreModule(_ path: String) -> Bool {
 }
 
 public func allCoreModulePaths() -> [String] {
-    ["Core.GitHub", "Core.Memory", "Core.Tools", "Core.Analyzers", "Core.FS", "Core.Network"]
+    ["Core.GitHub", "Core.Memory", "Core.Tools", "Core.Analyzers", "Core.FS", "Core.Network", "Core.UI"]
 }
 
 private func scheme(_ t: MoonType) -> Scheme { Scheme(vars: [], type: t) }
@@ -110,6 +111,10 @@ private func fsSchemes() -> [String: Scheme] {
         "makeDir": scheme(fn(prim("String"), io(prim("Unit")))),
         "removePath": scheme(fn(prim("String"), io(prim("Unit")))),
     ]
+}
+
+private func uiSchemes() -> [String: Scheme] {
+    [:]
 }
 
 private func networkSchemes() -> [String: Scheme] {

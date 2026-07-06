@@ -9,6 +9,7 @@ dependencies:
   Core.FS
   Core.Network
   Core.Analyzers
+  Core.UI
 
 --? Named runnable entrypoints. Values are project-relative paths to `.moon` files.
 targets:
@@ -18,6 +19,7 @@ targets:
   pr-triage: examples/pr-triage.moon
   requirements-check: examples/requirements-check.moon
   storm: examples/code-review-storm.moon
+  ui-counter: examples/ui-counter.moon
 
 --? LLM provider credentials and wire format.
 providers:

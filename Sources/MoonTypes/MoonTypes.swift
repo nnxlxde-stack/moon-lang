@@ -46,13 +46,23 @@ public struct TypeConstructor: Equatable, Sendable {
     public var kind: TypeConstructorKind
     public var fields: [MoonFieldType]?
     public var constructors: [DataConstructor]?
+    /// When set, record syntax for this constructor produces the parent ADT (e.g. Text -> Element msg).
+    public var dataParent: String?
 
-    public init(name: String, params: [String], kind: TypeConstructorKind, fields: [MoonFieldType]? = nil, constructors: [DataConstructor]? = nil) {
+    public init(
+        name: String,
+        params: [String],
+        kind: TypeConstructorKind,
+        fields: [MoonFieldType]? = nil,
+        constructors: [DataConstructor]? = nil,
+        dataParent: String? = nil
+    ) {
         self.name = name
         self.params = params
         self.kind = kind
         self.fields = fields
         self.constructors = constructors
+        self.dataParent = dataParent
     }
 }
 
@@ -149,6 +159,7 @@ private let knownTypes: Set<String> = [
     "PullRequest", "ChangedFile", "LongTerm", "Finding", "Recommendation",
     "Suggestion", "Location", "Severity", "Category", "Verdict",
     "Analyzer", "Reviewer", "AnalysisResult", "ReviewResult",
+    "Element", "Cmd", "App", "TextStyle", "Align", "Color",
 ]
 
 private func isTypeVarName(_ name: String) -> Bool {

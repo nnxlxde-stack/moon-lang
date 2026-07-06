@@ -241,6 +241,15 @@ private func parseConstructor(_ ts: TokenStream) throws -> Constructor {
         )
     }
 
+    if ts.at(.lbracket) {
+        let t = try parseTypeSpec(ts)
+        return Constructor(
+            name: name,
+            args: ConstructorArgs.positional(types: [t], span: ts.makeSpan(start: start, end: ts.last())),
+            span: ts.makeSpan(start: start, end: ts.last())
+        )
+    }
+
     if ts.at(.lbrace) {
         _ = ts.advance()
         var fields: [RecordFieldType] = []
@@ -367,6 +376,8 @@ private func parseFunctionEquation(_ ts: TokenStream, expectedName: String?) thr
         let decl = try parseAgentDecl(ts)
         body = .expression(.agent(decl: decl, span: ts.makeSpan(start: start, end: ts.last())))
     } else {
+        ts.stopAtEquation = true
+        defer { ts.stopAtEquation = false }
         body = .expression(try parseExpression(ts))
     }
 
@@ -378,19 +389,30 @@ private func isPatternContinuer(_ ts: TokenStream) -> Bool {
     return ts.check(.ident, .lparen, .lbracket, .string, .int, .float, .kwTrue, .kwFalse)
 }
 
+private func isTypeParamNameStart(_ ts: TokenStream) -> Bool {
+    ts.at(.ident) || ts.at(.kwModel)
+}
+
+private func parseTypeParamName(_ ts: TokenStream) throws -> String {
+    if ts.at(.ident) || ts.at(.kwModel) {
+        return ts.advance().value ?? ""
+    }
+    throw ParseError("Expected type parameter", line: ts.peek().line, column: ts.peek().column)
+}
+
 private func parseTypeParams(_ ts: TokenStream) throws -> [String] {
     var params: [String] = []
-    while ts.at(.ident), !isDeclBoundary(ts) {
+    while isTypeParamNameStart(ts), !isDeclBoundary(ts) {
         let next = ts.peek(offset: 1).kind
         if next == .colon, ts.peek(offset: 2).kind == .colon {
-            params.append(ts.advance().value ?? "")
+            params.append(try parseTypeParamName(ts))
             break
         }
         if next == .equals {
-            params.append(ts.advance().value ?? "")
+            params.append(try parseTypeParamName(ts))
             break
         }
-        params.append(ts.advance().value ?? "")
+        params.append(try parseTypeParamName(ts))
     }
     return params
 }

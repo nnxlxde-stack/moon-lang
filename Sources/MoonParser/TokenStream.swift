@@ -20,6 +20,7 @@ public struct ParseError: Error, CustomStringConvertible {
 public final class TokenStream: @unchecked Sendable {
     private let tokens: [Token]
     private var pos = 0
+    public var stopAtEquation = false
 
     public init(_ tokens: [Token]) {
         self.tokens = tokens

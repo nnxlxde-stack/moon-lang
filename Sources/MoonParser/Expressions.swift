@@ -155,9 +155,35 @@ private func parseUnary(_ ts: TokenStream) throws -> Expression {
     return try parseApp(ts)
 }
 
+private func looksLikeFunctionEquationStart(_ ts: TokenStream) -> Bool {
+    guard ts.at(.ident) else { return false }
+    let saved = ts.save()
+    defer { ts.restore(saved) }
+    _ = ts.advance()
+    while !ts.at(.equals), !ts.at(.eof) {
+        if ts.at(.colon) { return false }
+        if !ts.check(.ident, .lparen, .lbracket, .string, .int, .float, .kwTrue, .kwFalse) {
+            return false
+        }
+        if ts.at(.lparen) {
+            _ = ts.advance()
+            var depth = 1
+            while depth > 0, !ts.at(.eof) {
+                if ts.at(.lparen) { depth += 1 }
+                if ts.at(.rparen) { depth -= 1 }
+                _ = ts.advance()
+            }
+            continue
+        }
+        _ = ts.advance()
+    }
+    return ts.at(.equals)
+}
+
 private func parseApp(_ ts: TokenStream) throws -> Expression {
     var expr = try parsePostfix(ts)
     while isPrimaryStart(ts) {
+        if ts.stopAtEquation, looksLikeFunctionEquationStart(ts) { break }
         let startPos: MoonAST.Position
         switch expr {
         case .lit(_, let span): startPos = span.start
@@ -241,7 +267,7 @@ private func isPrimaryStart(_ ts: TokenStream) -> Bool {
     return ts.check(
         .ident, .string, .int, .float, .kwTrue, .kwFalse,
         .lparen, .lbracket, .backslash, .kwIf, .kwDo, .kwAgent, .kwModel,
-        .minus, .kwPure
+        .kwPure
     )
 }
 
