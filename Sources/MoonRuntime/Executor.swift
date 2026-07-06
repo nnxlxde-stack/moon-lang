@@ -171,11 +171,12 @@ public func runProgram(_ program: Program, options: ProgramRunOptions = ProgramR
         onAcquire: { tier, active in metrics.recordWorkerStart(tier: tier, concurrent: active) }
     ))
 
+    let runtimeProgram = programWithImportedStdlib(program)
     let ctx = RuntimeContext(
-        program: program,
+        program: runtimeProgram,
         agents: collectAgents(program),
         builtins: builtinsFromImports(program),
-        constructors: collectDataConstructors(program),
+        constructors: collectDataConstructors(runtimeProgram),
         llm: llm,
         memory: MemoryManager(longTermPath: runtimeConfig.longTermMemoryPath, metrics: metrics),
         pool: pool,

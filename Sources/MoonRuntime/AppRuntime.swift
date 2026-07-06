@@ -36,11 +36,12 @@ public func evaluateAppMain(
         llm = TracingLlmClient(client: llm, writer: writer)
     }
 
+    let runtimeProgram = programWithImportedStdlib(program)
     let ctx = RuntimeContext(
-        program: program,
+        program: runtimeProgram,
         agents: collectAgents(program),
         builtins: builtinsFromImports(program),
-        constructors: collectDataConstructors(program),
+        constructors: collectDataConstructors(runtimeProgram),
         llm: llm,
         memory: MemoryManager(longTermPath: runtimeConfig.longTermMemoryPath, metrics: metrics),
         pool: options.workerPool ?? WorkerPool(config: WorkerPoolConfig(

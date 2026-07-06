@@ -12,10 +12,12 @@ import MoonRuntime
     main = App { init = (0, NoCmd), update = counterUpdate, view = counterView }
     """
     let program = try MoonParser().parse(source)
-    let constructors = collectDataConstructors(program)
+    let runtimeProgram = programWithImportedStdlib(program)
+    let constructors = collectDataConstructors(runtimeProgram)
     #expect(constructors.contains("NoCmd"))
     #expect(constructors.contains("Increment"))
     #expect(constructors.contains("Decrement"))
+    #expect(findUserFunction(runtimeProgram, "padding") != nil)
 }
 
 @Test func loadsUiCounterAppSession() async throws {
@@ -32,6 +34,7 @@ import MoonRuntime
     } else {
         Issue.record("Expected Int model for ui-counter")
     }
+    _ = try await session.buildScene(width: 480, height: 360)
 }
 
 @Test func loadsUiInputListAppSession() async throws {

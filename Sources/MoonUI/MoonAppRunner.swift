@@ -57,11 +57,12 @@ public struct MoonAppRunner {
         let runtimeConfig = loadRuntimeConfig(overrides: RuntimeConfigOverrides(mock: options.mock))
         let metrics = MetricsCollector(pricing: runtimeConfig.pricing)
         let llm = createLlmClient(config: runtimeConfig, metrics: metrics)
+        let runtimeProgram = programWithImportedStdlib(program)
         return RuntimeContext(
-            program: program,
+            program: runtimeProgram,
             agents: collectAgents(program),
             builtins: builtinsFromImports(program),
-            constructors: collectDataConstructors(program),
+            constructors: collectDataConstructors(runtimeProgram),
             llm: llm,
             memory: MemoryManager(longTermPath: runtimeConfig.longTermMemoryPath, metrics: metrics),
             pool: WorkerPool(config: WorkerPoolConfig(
