@@ -2,7 +2,7 @@ import Foundation
 
 private enum TokenizerMode: Sendable {
     case unset
-    case script
+    case native
     case estimate
 }
 
@@ -18,14 +18,15 @@ private final class TokenizerState: @unchecked Sendable {
         }
     }
 
-    func resolveMode(scriptPath: String) -> TokenizerMode {
+    func resolveMode(tokenizerDir: String) -> TokenizerMode {
         lock.withLock {
             if mode != .unset { return mode }
             let env = ProcessInfo.processInfo.environment
             let explicit = configuredPath != nil || env["MOON_TOKENIZER_PATH"] != nil || env["MOON_USE_TOKENIZER"] == "1"
-            if explicit, FileManager.default.fileExists(atPath: scriptPath),
-               countTokensViaScriptOnce(text: "ping", tokenizerDir: dirname(scriptPath)) != nil {
-                mode = .script
+            let jsonPath = URL(fileURLWithPath: tokenizerDir).appendingPathComponent("tokenizer.json").path
+            if explicit || FileManager.default.fileExists(atPath: jsonPath),
+               loadDeepSeekTokenizer(path: tokenizerDir) != nil {
+                mode = .native
             } else {
                 mode = .estimate
             }
@@ -86,65 +87,12 @@ public func estimateTokensFromText(_ text: String, model: String, pricing: Prici
 
 public func countTokens(_ text: String, model: String, pricing: PricingTable) -> Int {
     let dir = tokenizerState.configuredTokenizerPath() ?? defaultTokenizerPath()
-    let scriptPath = URL(fileURLWithPath: dir).appendingPathComponent("count_tokens.py").path
-    let mode = tokenizerState.resolveMode(scriptPath: scriptPath)
-    if mode == .script, let count = countTokensViaScriptOnce(text: text, tokenizerDir: dir) {
-        return count
+    let mode = tokenizerState.resolveMode(tokenizerDir: dir)
+    if mode == .native, let tokenizer = loadDeepSeekTokenizer(path: dir) {
+        let count = tokenizer.countTokens(text)
+        if count > 0 { return count }
     }
     return estimateTokensFromText(text, model: model, pricing: pricing)
-}
-
-private func countTokensViaScriptOnce(text: String, tokenizerDir: String) -> Int? {
-    let scriptPath = URL(fileURLWithPath: tokenizerDir)
-        .appendingPathComponent("count_tokens.py")
-        .path
-    guard FileManager.default.fileExists(atPath: scriptPath) else { return nil }
-
-    for python in pythonCandidates() {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: python)
-        process.arguments = [scriptPath, tokenizerDir]
-
-        let input = Pipe()
-        let output = Pipe()
-        process.standardInput = input
-        process.standardOutput = output
-        process.standardError = Pipe()
-
-        do {
-            try process.run()
-            input.fileHandleForWriting.write(Data(text.utf8))
-            try input.fileHandleForWriting.close()
-            process.waitUntilExit()
-            guard process.terminationStatus == 0 else { continue }
-            let data = output.fileHandleForReading.readDataToEndOfFile()
-            guard let value = String(data: data, encoding: .utf8)?
-                .trimmingCharacters(in: .whitespacesAndNewlines),
-                  let count = Int(value) else {
-                continue
-            }
-            return count
-        } catch {
-            continue
-        }
-    }
-    tokenizerState.forceEstimate()
-    return nil
-}
-
-private func pythonCandidates() -> [String] {
-    var candidates = [ProcessInfo.processInfo.environment["MOON_PYTHON"]]
-        .compactMap { $0 }.filter { !$0.isEmpty }
-    #if os(Windows)
-    candidates.append(contentsOf: ["python", "python3", "py"])
-    #else
-    candidates.append(contentsOf: ["/usr/bin/python3", "/usr/local/bin/python3", "python3", "python"])
-    #endif
-    return candidates
-}
-
-private func dirname(_ path: String) -> String {
-    URL(fileURLWithPath: path).deletingLastPathComponent().path
 }
 
 private extension NSLock {

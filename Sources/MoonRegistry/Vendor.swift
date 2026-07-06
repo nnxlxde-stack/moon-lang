@@ -76,11 +76,7 @@ public func vendorPackage(
         return VendorResult(dependency: dependency, destination: destination, action: .copied)
     }
 
-    guard host == "github.com" else {
-        throw VendorError.unsupportedDependency("host \(host) is not supported yet")
-    }
-
-    let repoURL = "https://github.com/\(owner)/\(repo).git"
+    let repoURL = gitRemoteURL(host: host, owner: owner, repo: repo)
     let tag = version.hasPrefix("v") ? version : "v\(version)"
     try runGitClone(repoURL: repoURL, tag: tag, destination: destination)
     return VendorResult(dependency: dependency, destination: destination, action: .cloned)
