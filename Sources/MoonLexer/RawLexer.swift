@@ -30,6 +30,11 @@ private func isAsciiDigit(_ s: UnicodeScalar) -> Bool {
     (48...57).contains(s.value)
 }
 
+/// Canonicalize multiline string content so AST/goldens match across CRLF/LF checkouts.
+private func normalizeLexerString(_ value: String) -> String {
+    value.replacingOccurrences(of: "\r\n", with: "\n")
+}
+
 public func rawLex(_ source: String) throws -> [Token] {
     let scalars = Array(source.unicodeScalars)
     var tokens: [RawToken] = []
@@ -101,7 +106,7 @@ public func rawLex(_ source: String) throws -> [Token] {
                 value.unicodeScalars.append(advance())
             }
             tokens.append(makeToken(
-                kind: .string, value: value,
+                kind: .string, value: normalizeLexerString(value),
                 startLine: startLine, startCol: startCol, startOffset: startOffset,
                 hadSpaceBefore: hadSpaceBefore, hadSpaceAfter: hasSpaceAfter()
             ))
@@ -122,7 +127,7 @@ public func rawLex(_ source: String) throws -> [Token] {
         }
         _ = advance()
         tokens.append(makeToken(
-            kind: .string, value: value,
+            kind: .string, value: normalizeLexerString(value),
             startLine: startLine, startCol: startCol, startOffset: startOffset,
             hadSpaceBefore: hadSpaceBefore, hadSpaceAfter: hasSpaceAfter()
         ))
