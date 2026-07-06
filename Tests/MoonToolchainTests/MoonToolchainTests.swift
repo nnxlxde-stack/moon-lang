@@ -620,9 +620,13 @@ private func assertGoldenDag(name: String) throws {
     }
 
     let actualData = try JSONEncoder().encode(dag)
-    let actualObj = try JSONSerialization.jsonObject(with: actualData) as? [String: Any]
+    let actualObj = normalizeGoldenObject(
+        try JSONSerialization.jsonObject(with: actualData) as? [String: Any] ?? [:]
+    )
     let expectedData = try Data(contentsOf: goldenPath)
-    let expectedObj = try JSONSerialization.jsonObject(with: expectedData) as? [String: Any]
+    let expectedObj = normalizeGoldenObject(
+        try JSONSerialization.jsonObject(with: expectedData) as? [String: Any] ?? [:]
+    )
 
     if let diff = firstJsonDiff(actualObj as Any, expectedObj) {
         Issue.record("DAG mismatch for \(name) at \(diff.path): actual=\(diff.actual) expected=\(diff.expected)")
@@ -636,9 +640,11 @@ private func assertGolden(name: String) throws {
 
     let src = try String(contentsOf: examplePath, encoding: .utf8)
     let program = try MoonParser().parse(src)
-    let actual = MoonASTLegacyExport.export(program)
+    let actual = normalizeGoldenObject(MoonASTLegacyExport.export(program))
     let expectedData = try Data(contentsOf: goldenPath)
-    let expectedObj = try JSONSerialization.jsonObject(with: expectedData) as? [String: Any]
+    let expectedObj = normalizeGoldenObject(
+        try JSONSerialization.jsonObject(with: expectedData) as? [String: Any] ?? [:]
+    )
 
     if let diff = firstJsonDiff(actual, expectedObj) {
         Issue.record("AST mismatch for \(name) at \(diff.path): actual=\(diff.actual) expected=\(diff.expected)")
@@ -657,7 +663,7 @@ private func firstJsonDiff(_ lhs: Any, _ rhs: Any?, path: String = "$") -> JsonD
         return JsonDiff(path: path, actual: stringify(lhs), expected: "nil")
     }
 
-    if let ld = lhs as? [String: Any], let rd = rhs as? [String: Any] {
+    if let ld = jsonDictValue(lhs), let rd = jsonDictValue(rhs) {
         let lk = Set(ld.keys)
         let rk = Set(rd.keys)
         for key in lk.subtracting(rk) {
@@ -674,7 +680,7 @@ private func firstJsonDiff(_ lhs: Any, _ rhs: Any?, path: String = "$") -> JsonD
         return nil
     }
 
-    if let la = lhs as? [Any], let ra = rhs as? [Any] {
+    if let la = jsonArrayValue(lhs), let ra = jsonArrayValue(rhs) {
         if la.count != ra.count {
             return JsonDiff(path: path, actual: "count \(la.count)", expected: "count \(ra.count)")
         }
@@ -696,7 +702,7 @@ private func firstJsonDiff(_ lhs: Any, _ rhs: Any?, path: String = "$") -> JsonD
         return nil
     }
 
-    if let ls = lhs as? String, let rs = rhs as? String {
+    if let ls = jsonStringValue(lhs), let rs = jsonStringValue(rhs) {
         if normalizeGoldenLineEndings(ls) != normalizeGoldenLineEndings(rs) {
             return JsonDiff(path: path, actual: ls, expected: rs)
         }
@@ -716,8 +722,44 @@ private func firstJsonDiff(_ lhs: Any, _ rhs: Any?, path: String = "$") -> JsonD
     return JsonDiff(path: path, actual: stringify(lhs), expected: stringify(rhs))
 }
 
+private func jsonStringValue(_ value: Any) -> String? {
+    if let s = value as? String { return s }
+    if let s = value as? NSString { return s as String }
+    return nil
+}
+
+private func jsonDictValue(_ value: Any) -> [String: Any]? {
+    if let dict = value as? [String: Any] { return dict }
+    guard let dict = value as? NSDictionary else { return nil }
+    var out: [String: Any] = [:]
+    for (key, val) in dict {
+        guard let key = key as? String else { return nil }
+        out[key] = val
+    }
+    return out
+}
+
+private func jsonArrayValue(_ value: Any) -> [Any]? {
+    if let array = value as? [Any] { return array }
+    if let array = value as? NSArray { return array.map { $0 } }
+    return nil
+}
+
+private func normalizeGoldenObject(_ value: Any) -> Any {
+    if let string = jsonStringValue(value) {
+        return normalizeGoldenLineEndings(string)
+    }
+    if let dict = jsonDictValue(value) {
+        return dict.mapValues { normalizeGoldenObject($0) }
+    }
+    if let array = jsonArrayValue(value) {
+        return array.map { normalizeGoldenObject($0) }
+    }
+    return value
+}
+
 private func normalizeGoldenLineEndings(_ value: String) -> String {
-    value.replacingOccurrences(of: "\r\n", with: "\n")
+    value.replacingOccurrences(of: "\r\n", with: "\n").replacingOccurrences(of: "\r", with: "\n")
 }
 
 private func stringify(_ value: Any) -> String {
