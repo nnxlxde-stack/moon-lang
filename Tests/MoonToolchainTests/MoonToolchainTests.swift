@@ -620,13 +620,9 @@ private func assertGoldenDag(name: String) throws {
     }
 
     let actualData = try JSONEncoder().encode(dag)
-    let actualObj = normalizeGoldenObject(
-        try JSONSerialization.jsonObject(with: actualData) as? [String: Any] ?? [:]
-    )
+    let actualObj = try loadNormalizedGoldenJSON(from: actualData)
     let expectedData = try Data(contentsOf: goldenPath)
-    let expectedObj = normalizeGoldenObject(
-        try JSONSerialization.jsonObject(with: expectedData) as? [String: Any] ?? [:]
-    )
+    let expectedObj = try loadNormalizedGoldenJSON(from: expectedData)
 
     if let diff = firstJsonDiff(actualObj as Any, expectedObj) {
         Issue.record("DAG mismatch for \(name) at \(diff.path): actual=\(diff.actual) expected=\(diff.expected)")
@@ -640,11 +636,9 @@ private func assertGolden(name: String) throws {
 
     let src = try String(contentsOf: examplePath, encoding: .utf8)
     let program = try MoonParser().parse(src)
-    let actual = normalizeGoldenObject(MoonASTLegacyExport.export(program))
+    let actual = try loadNormalizedGoldenJSON(from: MoonASTLegacyExport.export(program))
     let expectedData = try Data(contentsOf: goldenPath)
-    let expectedObj = normalizeGoldenObject(
-        try JSONSerialization.jsonObject(with: expectedData) as? [String: Any] ?? [:]
-    )
+    let expectedObj = try loadNormalizedGoldenJSON(from: expectedData)
 
     if let diff = firstJsonDiff(actual, expectedObj) {
         Issue.record("AST mismatch for \(name) at \(diff.path): actual=\(diff.actual) expected=\(diff.expected)")
@@ -719,12 +713,38 @@ private func firstJsonDiff(_ lhs: Any, _ rhs: Any?, path: String = "$") -> JsonD
         return nil
     }
 
+    if let li = lhs as? NSNumber, let ri = rhs as? Int {
+        if li.int64Value != Int64(ri) { return JsonDiff(path: path, actual: "\(li)", expected: "\(ri)") }
+        return nil
+    }
+
+    if let ld = lhs as? Double, let rd = rhs as? Double {
+        if ld != rd { return JsonDiff(path: path, actual: "\(ld)", expected: "\(rd)") }
+        return nil
+    }
+
+    if let li = lhs as? Int, let ri = rhs as? Int {
+        if li != ri { return JsonDiff(path: path, actual: "\(li)", expected: "\(ri)") }
+        return nil
+    }
+
     return JsonDiff(path: path, actual: stringify(lhs), expected: stringify(rhs))
+}
+
+private func loadNormalizedGoldenJSON(from export: [String: Any]) throws -> Any {
+    let data = try JSONSerialization.data(withJSONObject: export, options: [.sortedKeys])
+    return try loadNormalizedGoldenJSON(from: data)
+}
+
+private func loadNormalizedGoldenJSON(from data: Data) throws -> Any {
+    let parsed = try JSONSerialization.jsonObject(with: data)
+    return normalizeGoldenObject(parsed)
 }
 
 private func jsonStringValue(_ value: Any) -> String? {
     if let s = value as? String { return s }
     if let s = value as? NSString { return s as String }
+    if let s = value as? Substring { return String(s) }
     return nil
 }
 
