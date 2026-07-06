@@ -697,7 +697,9 @@ private func firstJsonDiff(_ lhs: Any, _ rhs: Any?, path: String = "$") -> JsonD
     }
 
     if let ls = lhs as? String, let rs = rhs as? String {
-        if ls != rs { return JsonDiff(path: path, actual: ls, expected: rs) }
+        if normalizeGoldenLineEndings(ls) != normalizeGoldenLineEndings(rs) {
+            return JsonDiff(path: path, actual: ls, expected: rs)
+        }
         return nil
     }
 
@@ -712,6 +714,10 @@ private func firstJsonDiff(_ lhs: Any, _ rhs: Any?, path: String = "$") -> JsonD
     }
 
     return JsonDiff(path: path, actual: stringify(lhs), expected: stringify(rhs))
+}
+
+private func normalizeGoldenLineEndings(_ value: String) -> String {
+    value.replacingOccurrences(of: "\r\n", with: "\n")
 }
 
 private func stringify(_ value: Any) -> String {
