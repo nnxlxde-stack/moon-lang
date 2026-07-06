@@ -56,6 +56,8 @@ cd moon-setup
 - `DEEPSEEK_API_KEY` — для реальных LLM-вызовов (`moon run --no-mock`)
 - `GITHUB_TOKEN` — для реальных GitHub API вызовов (`Core.GitHub`)
 
+**Бинарник Windows (без сборки):** скачайте `moon-v0.3.0-windows-x86_64.exe` из [GitHub Releases](https://github.com/nnxlxde-stack/moon-lang/releases/latest). Требуется Swift runtime в PATH.
+
 ```bash
 git clone https://github.com/nnxlxde-stack/moon-lang.git
 cd moon-lang
