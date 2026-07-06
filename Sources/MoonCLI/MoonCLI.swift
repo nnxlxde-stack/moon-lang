@@ -503,5 +503,5 @@ struct MoonCLI {
 }
 
 enum MoonToolchainVersion {
-    static let current = "0.3.0-swift-phase10"
+    static let current = "0.3.0-swift-phase11"
 }

@@ -2,13 +2,16 @@ import Foundation
 
 public enum MoonDependency: Equatable, Sendable, Codable {
     case core(String)
-    case git(host: String, owner: String, repo: String, version: String)
+    case git(host: String, owner: String, repo: String, package: String?, version: String)
 
     public var key: String {
         switch self {
         case .core(let module):
             return module
-        case .git(let host, let owner, let repo, _):
+        case .git(let host, let owner, let repo, let package, _):
+            if let package {
+                return "\(host)/\(owner)/\(repo)/\(package)"
+            }
             return "\(host)/\(owner)/\(repo)"
         }
     }
@@ -18,20 +21,35 @@ public enum MoonDependency: Equatable, Sendable, Codable {
         return false
     }
 
+    public var isMonorepoPackage: Bool {
+        if case .git(_, _, _, let package, _) = self {
+            return package != nil
+        }
+        return false
+    }
+
     public func moonfileLine() -> String {
         switch self {
         case .core(let module):
             return module
-        case .git(let host, let owner, let repo, let version):
-            return "\(host)/\(owner)/\(repo): \"\(version)\""
+        case .git(let host, let owner, let repo, let package, let version):
+            let path = if let package {
+                "\(host)/\(owner)/\(repo)/\(package)"
+            } else {
+                "\(host)/\(owner)/\(repo)"
+            }
+            return "\(path): \"\(version)\""
         }
     }
 }
 
 public func parseGitDependencyKey(_ key: String, version: String) -> MoonDependency? {
     let parts = key.split(separator: "/", omittingEmptySubsequences: true).map(String.init)
-    guard parts.count == 3 else { return nil }
-    return .git(host: parts[0], owner: parts[1], repo: parts[2], version: version)
+    guard parts.count == 3 || parts.count == 4 else { return nil }
+    if parts.count == 3 {
+        return .git(host: parts[0], owner: parts[1], repo: parts[2], package: nil, version: version)
+    }
+    return .git(host: parts[0], owner: parts[1], repo: parts[2], package: parts[3], version: version)
 }
 
 public func parsePackageRef(_ ref: String) throws -> MoonDependency {
@@ -82,12 +100,29 @@ public enum MoonPackageRefError: Error, CustomStringConvertible {
 }
 
 public func importPathMatchesDependency(_ importPath: [String], dependency: MoonDependency) -> Bool {
-    guard case .git(let host, let owner, let repo, _) = dependency else { return false }
+    guard case .git(let host, let owner, let repo, let package, _) = dependency else { return false }
     let hostParts = host.split(separator: ".").map(String.init)
-    let expected = hostParts + [owner, repo]
+    var expected = hostParts + [owner, repo]
+    if let package {
+        expected.append(package)
+    }
     return importPath == expected
 }
 
 public func dependencyForImportPath(_ path: [String], dependencies: [MoonDependency]) -> MoonDependency? {
     dependencies.first { importPathMatchesDependency(path, dependency: $0) }
+}
+
+public func gitTagForDependency(_ dependency: MoonDependency) -> String? {
+    guard case .git(_, _, _, let package, let version) = dependency else { return nil }
+    let semver = version.hasPrefix("v") ? version : "v\(version)"
+    if let package {
+        return "\(package)/\(semver)"
+    }
+    return semver
+}
+
+public func monorepoPackageSubpath(_ dependency: MoonDependency) -> String? {
+    guard case .git(_, _, _, let package, _) = dependency, let package else { return nil }
+    return "packages/\(package)"
 }

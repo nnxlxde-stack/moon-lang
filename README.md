@@ -2,7 +2,7 @@
 
 **Moon** — AI-native язык программирования для описания LLM-агентов, типизированных моделей данных и монадических пайплайнов. Синтаксис вдохновлён Haskell; конфигурация проекта — манифестом **Moonfile** в духе SwiftPM.
 
-**Toolchain:** `0.3.0-swift-phase10` · Swift 6.3+ · 74 теста
+**Toolchain:** `0.3.0-swift-phase11` · Swift 6.3+ · 77 тестов
 
 <p align="center">
   <a href="docs/index.html"><strong>📖 Полная документация</strong></a>
@@ -14,9 +14,18 @@
 |-------------|----------|
 | **moon-lang** (этот репозиторий) | Интерпретатор, CLI, LSP |
 | [moon-vscode](https://github.com/nnxlxde-stack/moon-vscode) | Расширение VS Code / Cursor |
-| [moon-pkg](https://github.com/nnxlxde-stack/moon-pkg) | Спецификация пакетного реестра |
+| [moon-pkg](https://github.com/nnxlxde-stack/moon-pkg) | Monorepo пакетов и каталог |
+| [moon-setup](https://github.com/nnxlxde-stack/moon-setup) | Скрипты установки toolchain + VS Code |
 
 Исторический TypeScript/Bun toolchain — ветка [`legacy`](https://github.com/nnxlxde-stack/moon-lang/tree/legacy).
+
+### Установка одной командой
+
+```powershell
+git clone https://github.com/nnxlxde-stack/moon-setup.git
+cd moon-setup
+.\install-all.ps1
+```
 
 ---
 
@@ -30,6 +39,16 @@
 - **Toolchain** — Swift CLI (check, run, build, plan, format, lsp, registry), LSP
 
 ## Быстрый старт
+
+### Установка одной командой
+
+```powershell
+git clone https://github.com/nnxlxde-stack/moon-setup.git
+cd moon-setup
+.\install-all.ps1
+```
+
+Подробнее — [moon-setup](https://github.com/nnxlxde-stack/moon-setup).
 
 ### Требования
 
@@ -127,12 +146,10 @@ moon help
 
 ## VS Code / Cursor
 
-Расширение вынесено в отдельный репозиторий: [moon-vscode](https://github.com/nnxlxde-stack/moon-vscode).
+Расширение: [moon-vscode Releases](https://github.com/nnxlxde-stack/moon-vscode/releases/latest) или `moon-setup`.
 
 ```bash
-git clone https://github.com/nnxlxde-stack/moon-vscode.git
-cd moon-vscode
-bun install && bun run package
+# Скачать .vsix из Releases, затем:
 code --install-extension vscode-moon-0.3.0.vsix
 ```
 

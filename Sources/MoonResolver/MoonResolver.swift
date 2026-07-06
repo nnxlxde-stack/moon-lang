@@ -158,7 +158,7 @@ public func resolveImports(_ program: Program, options: ResolveOptions) -> Resol
 
         if path.first == "github", path.count >= 4, let moonfile,
            let gitDep = dependencyForImportPath(path, dependencies: moonfile.dependencies),
-           case .git(_, let owner, let repo, let version) = gitDep {
+           case .git(_, let owner, let repo, let package, let version) = gitDep {
             if !moonfile.containsDependency(gitDep.key) {
                 errors.append(ResolverError(
                     message: "Package \(gitDep.key) is imported but not listed in Moonfile dependencies",
@@ -166,7 +166,13 @@ public func resolveImports(_ program: Program, options: ResolveOptions) -> Resol
                     column: span.start.column
                 ))
             }
-            let packageRoot = vendorDirectory(projectRoot: projectRoot, owner: owner, repo: repo, version: version)
+            let packageRoot = vendorDirectory(
+                projectRoot: projectRoot,
+                owner: owner,
+                repo: repo,
+                version: version,
+                package: package
+            )
             if let vendored = resolveVendoredPackage(packageRoot: packageRoot, pathKey: gitDep.key) {
                 imports.append(ResolvedImport(
                     path: path,

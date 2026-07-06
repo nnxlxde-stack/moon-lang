@@ -181,10 +181,11 @@ private let repoRoot: URL = {
 
 @Test func parsePackageRefGit() throws {
     let dep = try parsePackageRef("github.com/moon-lang/review-kit@0.1.0")
-    if case .git(let host, let owner, let repo, let version) = dep {
+    if case .git(let host, let owner, let repo, let package, let version) = dep {
         #expect(host == "github.com")
         #expect(owner == "moon-lang")
         #expect(repo == "review-kit")
+        #expect(package == nil)
         #expect(version == "0.1.0")
     } else {
         Issue.record("Expected git dependency")
@@ -284,7 +285,7 @@ private let repoRoot: URL = {
     let outRoot = repoRoot.appendingPathComponent(".moon/vendor-test-\(UUID().uuidString)").path
     defer { try? FileManager.default.removeItem(atPath: outRoot) }
 
-    let dep = MoonDependency.git(host: "github.com", owner: "moon-lang", repo: "review-kit", version: "0.1.0")
+    let dep = MoonDependency.git(host: "github.com", owner: "moon-lang", repo: "review-kit", package: nil, version: "0.1.0")
     let result = try vendorPackage(dep, projectRoot: outRoot, options: VendorOptions(localFixtureRoot: fixture))
     #expect(result.action == .copied)
 
@@ -298,7 +299,7 @@ private let repoRoot: URL = {
     let outRoot = repoRoot.appendingPathComponent(".moon/resolver-vendor-test").path
     defer { try? FileManager.default.removeItem(atPath: outRoot) }
 
-    let dep = MoonDependency.git(host: "github.com", owner: "moon-lang", repo: "review-kit", version: "0.1.0")
+    let dep = MoonDependency.git(host: "github.com", owner: "moon-lang", repo: "review-kit", package: nil, version: "0.1.0")
     _ = try vendorPackage(dep, projectRoot: outRoot, options: VendorOptions(localFixtureRoot: fixture))
 
     let src = """

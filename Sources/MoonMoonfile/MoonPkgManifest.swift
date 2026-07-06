@@ -39,11 +39,19 @@ public enum MoonPkgManifestError: Error, CustomStringConvertible {
     }
 }
 
-public func vendorDirectory(projectRoot: String, owner: String, repo: String, version: String) -> String {
-    URL(fileURLWithPath: projectRoot)
+public func vendorDirectory(
+    projectRoot: String,
+    owner: String,
+    repo: String,
+    version: String,
+    package: String? = nil
+) -> String {
+    var url = URL(fileURLWithPath: projectRoot)
         .appendingPathComponent(".moon/packages")
         .appendingPathComponent(owner)
         .appendingPathComponent(repo)
-        .appendingPathComponent(version)
-        .standardizedFileURL.path
+    if let package {
+        url = url.appendingPathComponent(package)
+    }
+    return url.appendingPathComponent(version).standardizedFileURL.path
 }

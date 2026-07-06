@@ -51,11 +51,17 @@ public func vendorPackage(
     projectRoot: String,
     options: VendorOptions = VendorOptions()
 ) throws -> VendorResult {
-    guard case .git(let host, let owner, let repo, let version) = dependency else {
+    guard case .git(let host, let owner, let repo, let package, let version) = dependency else {
         throw VendorError.unsupportedDependency(dependency.key)
     }
 
-    let destination = vendorDirectory(projectRoot: projectRoot, owner: owner, repo: repo, version: version)
+    let destination = vendorDirectory(
+        projectRoot: projectRoot,
+        owner: owner,
+        repo: repo,
+        version: version,
+        package: package
+    )
     let manifestPath = URL(fileURLWithPath: destination).appendingPathComponent("moon.pkg.json").path
 
     if FileManager.default.fileExists(atPath: manifestPath), !options.force {
@@ -77,7 +83,22 @@ public func vendorPackage(
     }
 
     let repoURL = gitRemoteURL(host: host, owner: owner, repo: repo)
-    let tag = version.hasPrefix("v") ? version : "v\(version)"
+    guard let tag = gitTagForDependency(dependency) else {
+        throw VendorError.unsupportedDependency(dependency.key)
+    }
+
+    if let subpath = monorepoPackageSubpath(dependency) {
+        let cloneRoot = destination + ".clone-tmp"
+        defer { try? FileManager.default.removeItem(atPath: cloneRoot) }
+        try runGitClone(repoURL: repoURL, tag: tag, destination: cloneRoot)
+        let packageRoot = URL(fileURLWithPath: cloneRoot).appendingPathComponent(subpath).path
+        guard FileManager.default.fileExists(atPath: packageRoot) else {
+            throw VendorError.copyFailed("Monorepo package path not found: \(subpath)")
+        }
+        try copyFixture(from: packageRoot, to: destination)
+        return VendorResult(dependency: dependency, destination: destination, action: .cloned)
+    }
+
     try runGitClone(repoURL: repoURL, tag: tag, destination: destination)
     return VendorResult(dependency: dependency, destination: destination, action: .cloned)
 }
@@ -110,6 +131,11 @@ private func copyFixture(from source: String, to destination: String) throws {
 }
 
 private func runGitClone(repoURL: String, tag: String, destination: String) throws {
+    let fm = FileManager.default
+    if fm.fileExists(atPath: destination) {
+        try fm.removeItem(atPath: destination)
+    }
+
     let process = Process()
     process.executableURL = URL(fileURLWithPath: "git")
     process.arguments = [

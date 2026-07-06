@@ -5,6 +5,7 @@ import MoonAST
 import MoonParser
 import MoonMoonfile
 import MoonRegistry
+import MoonResolver
 import MoonPrompt
 import MoonSchemaCompiler
 import MoonLSP
@@ -59,12 +60,81 @@ private let repoRoot: URL = {
     #expect(gitRemoteURL(host: "git.example.com", owner: "org", repo: "lib") == "https://git.example.com/org/lib.git")
 }
 
+@Test func parsePackageRefMonorepoSubpath() throws {
+    let dep = try parsePackageRef("github.com/nnxlxde-stack/moon-pkg/review-kit@0.1.0")
+    if case .git(let host, let owner, let repo, let package, let version) = dep {
+        #expect(host == "github.com")
+        #expect(owner == "nnxlxde-stack")
+        #expect(repo == "moon-pkg")
+        #expect(package == "review-kit")
+        #expect(version == "0.1.0")
+        #expect(gitTagForDependency(dep) == "review-kit/v0.1.0")
+        #expect(monorepoPackageSubpath(dep) == "packages/review-kit")
+    } else {
+        Issue.record("Expected monorepo git dependency")
+    }
+}
+
+@Test func vendorMonorepoFixturePackage() throws {
+    let fixture = repoRoot.appendingPathComponent("Tests/fixtures/review-kit").path
+    let outRoot = repoRoot.appendingPathComponent(".moon/vendor-monorepo-test").path
+    defer { try? FileManager.default.removeItem(atPath: outRoot) }
+
+    let dep = MoonDependency.git(
+        host: "github.com",
+        owner: "nnxlxde-stack",
+        repo: "moon-pkg",
+        package: "review-kit",
+        version: "0.1.0"
+    )
+    let result = try vendorPackage(dep, projectRoot: outRoot, options: VendorOptions(localFixtureRoot: fixture))
+    #expect(result.action == .copied)
+
+    let manifest = try loadMoonPkgManifest(at: result.destination)
+    #expect(manifest.name == "review-kit")
+}
+
+@Test func resolveMonorepoVendoredImport() throws {
+    let fixture = repoRoot.appendingPathComponent("Tests/fixtures/review-kit").path
+    let outRoot = repoRoot.appendingPathComponent(".moon/resolver-monorepo-test").path
+    defer { try? FileManager.default.removeItem(atPath: outRoot) }
+
+    let dep = MoonDependency.git(
+        host: "github.com",
+        owner: "nnxlxde-stack",
+        repo: "moon-pkg",
+        package: "review-kit",
+        version: "0.1.0"
+    )
+    _ = try vendorPackage(dep, projectRoot: outRoot, options: VendorOptions(localFixtureRoot: fixture))
+
+    let src = """
+    import github.com.nnxlxde-stack.moon-pkg.review-kit
+
+    main :: IO ()
+    main = do
+      pure $ reviewSummary "ok"
+    """
+    let program = try MoonParser().parse(src)
+    let moonfile = MoonfileDocument(
+        package: "demo",
+        dependencies: [dep, .core("Core.Tools")]
+    )
+    let resolved = resolveImports(
+        program,
+        options: ResolveOptions(entryPath: outRoot + "/main.moon", projectRoot: outRoot, moonfile: moonfile)
+    )
+    #expect(resolved.errors.isEmpty)
+    #expect(resolved.imports.contains { $0.pathKey == dep.key })
+}
+
 @Test func parsePackageRefGitLab() throws {
     let dep = try parsePackageRef("gitlab.com/acme/toolkit@2.0.0")
-    if case .git(let host, let owner, let repo, let version) = dep {
+    if case .git(let host, let owner, let repo, let package, let version) = dep {
         #expect(host == "gitlab.com")
         #expect(owner == "acme")
         #expect(repo == "toolkit")
+        #expect(package == nil)
         #expect(version == "2.0.0")
     } else {
         Issue.record("Expected git dependency")

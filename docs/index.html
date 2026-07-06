@@ -183,8 +183,8 @@
         <span class="section-label">Репозитории</span>
         <h2>Экосистема Moon</h2>
         <p>
-          Проект разделён на три репозитория. Этот сайт документирует язык и toolchain из
-          <strong>moon-lang</strong>; расширение редактора и спецификация пакетов живут отдельно.
+          Проект разделён на четыре репозитория. Этот сайт документирует язык и toolchain из
+          <strong>moon-lang</strong>; расширение, пакеты и установка — в соседних репозиториях.
         </p>
         <table class="moon-table">
           <thead>
@@ -193,15 +193,19 @@
           <tbody>
             <tr>
               <td><a href="https://github.com/nnxlxde-stack/moon-lang" target="_blank" rel="noopener">moon-lang</a></td>
-              <td>Интерпретатор, CLI, LSP, stdlib, примеры, тесты (74)</td>
+              <td>Интерпретатор, CLI, LSP, stdlib, примеры, тесты (77)</td>
             </tr>
             <tr>
               <td><a href="https://github.com/nnxlxde-stack/moon-vscode" target="_blank" rel="noopener">moon-vscode</a></td>
-              <td>Расширение VS Code / Cursor (подсветка, LSP, Build/Run)</td>
+              <td>Расширение VS Code / Cursor (<a href="https://github.com/nnxlxde-stack/moon-vscode/releases/latest" target="_blank" rel="noopener">.vsix Releases</a>)</td>
             </tr>
             <tr>
               <td><a href="https://github.com/nnxlxde-stack/moon-pkg" target="_blank" rel="noopener">moon-pkg</a></td>
-              <td>Спецификация пакетного реестра, фикстуры, <code>moon.pkg.json</code></td>
+              <td>Monorepo пакетов, <a href="https://raw.githubusercontent.com/nnxlxde-stack/moon-pkg/main/catalog/index.json" target="_blank" rel="noopener">catalog/index.json</a>, CI verify</td>
+            </tr>
+            <tr>
+              <td><a href="https://github.com/nnxlxde-stack/moon-setup" target="_blank" rel="noopener">moon-setup</a></td>
+              <td>Скрипты установки moon-lang + moon-vscode</td>
             </tr>
           </tbody>
         </table>
@@ -745,12 +749,13 @@ moon format examples/pr-triage.moon --write</pre>
         </p>
         <div class="moon-code-block">
           <div class="moon-code-header"><span class="moon-code-lang">shell</span><button class="moon-code-copy" type="button">Copy</button></div>
-          <pre>git clone https://github.com/nnxlxde-stack/moon-vscode.git
-cd moon-vscode
-bun install && bun run package
+          <pre># Рекомендуется: moon-setup (install-all.ps1 / install-all.sh)
+
+# Или скачать .vsix:
+# https://github.com/nnxlxde-stack/moon-vscode/releases/latest
 code --install-extension vscode-moon-0.3.0.vsix
 
-# LSP по умолчанию: .build/debug/moon lsp (после swift build в проекте Moon)
+# LSP: .build/debug/moon lsp (после swift build)
 # Переопределение: moon.languageServerPath</pre>
         </div>
         <h4>Языки в редакторе</h4>
@@ -787,7 +792,8 @@ code --install-extension vscode-moon-0.3.0.vsix
       <a href="grammar.ebnf">grammar.ebnf</a> ·
       <a href="https://github.com/nnxlxde-stack/moon-lang">moon-lang</a> ·
       <a href="https://github.com/nnxlxde-stack/moon-vscode">moon-vscode</a> ·
-      <a href="https://github.com/nnxlxde-stack/moon-pkg">moon-pkg</a>
+      <a href="https://github.com/nnxlxde-stack/moon-pkg">moon-pkg</a> ·
+      <a href="https://github.com/nnxlxde-stack/moon-setup">moon-setup</a>
     </p>
   </footer>
 
