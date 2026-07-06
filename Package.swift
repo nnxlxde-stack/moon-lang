@@ -1,5 +1,9 @@
 // swift-tools-version: 6.0
+import Foundation
 import PackageDescription
+
+private let packageDir = URL(fileURLWithPath: #filePath).deletingLastPathComponent().path
+private let yogaInclude = "\(packageDir)/Vendor/yoga"
 
 let package = Package(
     name: "moon",
@@ -56,6 +60,30 @@ let package = Package(
             "MoonSchemaCompiler",
             "MoonMoonfile",
         ]),
+        .target(
+            name: "YogaCore",
+            path: "Vendor/yoga/yoga",
+            exclude: ["CMakeLists.txt", "module.modulemap.disabled"],
+            cxxSettings: [
+                .headerSearchPath("../"),
+                .define("YOGA_EXPORT=", to: "YogaCore"),
+            ]
+        ),
+        .target(
+            name: "YogaLink",
+            dependencies: ["YogaCore"],
+            path: "Sources/YogaLink"
+        ),
+        .target(
+            name: "MoonYoga",
+            dependencies: ["YogaLink"],
+            path: "Sources/MoonYoga",
+            exclude: ["CAPI"],
+            swiftSettings: [
+                .unsafeFlags(["-Xcc", "-fmodule-map-file=\(packageDir)/Sources/MoonYoga/CAPI/module.modulemap"]),
+                .unsafeFlags(["-Xcc", "-I\(yogaInclude)"]),
+            ]
+        ),
         .executableTarget(name: "MoonCLI", dependencies: [
             "MoonAST",
             "MoonLexer",
@@ -70,6 +98,14 @@ let package = Package(
             "MoonRuntime",
         ]),
         .testTarget(name: "MoonASTTests", dependencies: ["MoonAST"]),
+        .testTarget(
+            name: "MoonYogaTests",
+            dependencies: ["MoonYoga"],
+            swiftSettings: [
+                .unsafeFlags(["-Xcc", "-fmodule-map-file=\(packageDir)/Sources/MoonYoga/CAPI/module.modulemap"]),
+                .unsafeFlags(["-Xcc", "-I\(yogaInclude)"]),
+            ]
+        ),
         .testTarget(name: "MoonToolchainTests", dependencies: [
             "MoonLexer", "MoonParser", "MoonTypechecker", "MoonResolver",
             "MoonMoonfile", "MoonPlanner", "MoonRuntime", "MoonBuild", "MoonSchemaCompiler",
@@ -77,6 +113,8 @@ let package = Package(
             "MoonFormatter",
             "MoonLSP",
             "MoonPrompt",
+            "MoonYoga",
         ]),
-    ]
+    ],
+    cxxLanguageStandard: .cxx20
 )

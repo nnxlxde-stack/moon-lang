@@ -31,9 +31,9 @@
 
 ## Phase 2 — Биндинг Yoga (layout)
 
-- [ ] Добавить Yoga (submodule/vendored C++, MIT) как C-таргет в `Package.swift`, обёртку `MoonYoga` — тонкий Swift-слой над C API Yoga (`YGNodeNew`, `YGNodeStyleSetFlexDirection`, `YGNodeCalculateLayout`).
-- [ ] Смэппить `Column`/`Row`/`Rect` из `Element msg` (Phase 1) на Yoga-ноды с их flex-свойствами (padding, gap, alignment) — минимальный набор пропов, не весь API Yoga сразу.
-- [ ] Критерий готовности: unit-тест — дерево `Column [Row [...], Text ...]` даёт ожидаемые прямоугольники (x,y,w,h) после `YGNodeCalculateLayout`, сверено вручную на 3–4 фикстурах.
+- [x] Добавить Yoga (submodule/vendored C++, MIT) как C-таргет в `Package.swift`, обёртку `MoonYoga` — тонкий Swift-слой над C API Yoga (`YGNodeNew`, `YGNodeStyleSetFlexDirection`, `YGNodeCalculateLayout`).
+- [x] Смэппить `Column`/`Row`/`Rect` из `Element msg` (Phase 1) на Yoga-ноды с их flex-свойствами (padding, gap, alignment) — минимальный набор пропов, не весь API Yoga сразу.
+- [x] Критерий готовности: unit-тест — дерево `Column [Row [...], Text ...]` даёт ожидаемые прямоугольники (x,y,w,h) после `YGNodeCalculateLayout`, сверено вручную на 3–4 фикстурах.
 
 ## Phase 3 — Новый Swift-таргет `Sources/MoonUI` (окно + рендер + рантайм-цикл)
 

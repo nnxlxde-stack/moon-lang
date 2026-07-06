@@ -1,0 +1,4 @@
+module YogaCAPI [system] {
+    header "YogaCAPI.h"
+    export *
+}
