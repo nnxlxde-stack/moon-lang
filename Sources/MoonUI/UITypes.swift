@@ -47,6 +47,8 @@ public struct UIColor: Equatable, Sendable {
 public enum ElementKind: String, Sendable {
     case text
     case button
+    case input
+    case list
     case column
     case row
     case card
@@ -60,20 +62,32 @@ public enum ElementKind: String, Sendable {
 public struct ElementPayload: Sendable {
     public var text: String?
     public var textStyle: UITextStyle?
+    public var placeholder: String?
     public var onPress: RuntimeValue?
+    public var onChange: RuntimeValue?
+    public var onScroll: RuntimeValue?
+    public var scrollOffset: Int
     public var enabled: Bool
     public var foreground: UIColor?
 
     public init(
         text: String? = nil,
         textStyle: UITextStyle? = nil,
+        placeholder: String? = nil,
         onPress: RuntimeValue? = nil,
+        onChange: RuntimeValue? = nil,
+        onScroll: RuntimeValue? = nil,
+        scrollOffset: Int = 0,
         enabled: Bool = true,
         foreground: UIColor? = nil
     ) {
         self.text = text
         self.textStyle = textStyle
+        self.placeholder = placeholder
         self.onPress = onPress
+        self.onChange = onChange
+        self.onScroll = onScroll
+        self.scrollOffset = scrollOffset
         self.enabled = enabled
         self.foreground = foreground
     }

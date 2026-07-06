@@ -39,6 +39,8 @@ public indirect enum UILayoutElement: Sendable {
     case padding(all: Float, child: UILayoutElement)
     case paddingXY(horizontal: Float, vertical: Float, child: UILayoutElement)
     case frame(width: Float, height: Float, child: UILayoutElement)
+    case input(minHeight: Float = 36, horizontalPadding: Float = 12)
+    case list(spacing: Float, padding: Float, children: [UILayoutElement])
 }
 
 public struct LayoutNode: Identifiable, Sendable {

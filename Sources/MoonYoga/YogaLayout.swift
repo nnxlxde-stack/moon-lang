@@ -173,9 +173,38 @@ private func build(
 
     case .frame(let width, let height, let child):
         let node = YogaOwnedNode(YGNodeNew())
-        YGNodeStyleSetWidth(node.ref, width)
-        YGNodeStyleSetHeight(node.ref, height)
+        if width > 0 {
+            YGNodeStyleSetWidth(node.ref, width)
+        }
+        if height > 0 {
+            YGNodeStyleSetHeight(node.ref, height)
+        }
         try build(child, into: node, nextID: &nextID, measureBoxes: &measureBoxes)
+        parent.addChild(node)
+
+    case .input(let minHeight, let horizontalPadding):
+        let node = YogaOwnedNode(YGNodeNew())
+        let size = TextMetrics.size(for: "M", style: .body)
+        let box = MeasureBox(width: size.width + horizontalPadding * 2, height: max(minHeight, size.height + 8))
+        measureBoxes.append(box)
+        YGNodeSetContext(node.ref, Unmanaged.passUnretained(measureBoxes.last!).toOpaque())
+        YGNodeSetMeasureFunc(node.ref, cMeasureLeaf)
+        YGNodeStyleSetMinHeight(node.ref, minHeight)
+        YGNodeStyleSetAlignSelf(node.ref, YGAlignStretch)
+        parent.addChild(node)
+
+    case .list(let spacing, let padding, let children):
+        let node = YogaOwnedNode(YGNodeNew())
+        YGNodeStyleSetFlexDirection(node.ref, YGFlexDirectionColumn)
+        YGNodeStyleSetFlexGrow(node.ref, 1)
+        YGNodeStyleSetFlexShrink(node.ref, 1)
+        YGNodeStyleSetGap(node.ref, YGGutterAll, spacing)
+        if padding > 0 {
+            YGNodeStyleSetPadding(node.ref, YGEdgeAll, padding)
+        }
+        for child in children {
+            try build(child, into: node, nextID: &nextID, measureBoxes: &measureBoxes)
+        }
         parent.addChild(node)
     }
 }
@@ -212,27 +241,7 @@ private func collectTree(
 // MARK: - Metrics
 
 private func measureText(_ content: String, style: UITextStyle) -> LayoutRect {
-    let charWidth: Float
-    let lineHeight: Float
-    switch style {
-    case .title:
-        charWidth = 12
-        lineHeight = 32
-    case .headline:
-        charWidth = 10
-        lineHeight = 26
-    case .body:
-        charWidth = 8
-        lineHeight = 20
-    case .caption:
-        charWidth = 7
-        lineHeight = 16
-    case .monospace:
-        charWidth = 8.5
-        lineHeight = 18
-    }
-    let count = Float(max(content.count, 1))
-    return LayoutRect(x: 0, y: 0, width: count * charWidth, height: lineHeight)
+    TextMetrics.size(for: content, style: style)
 }
 
 private func mapAlign(_ align: UIAlign) -> YGAlign {

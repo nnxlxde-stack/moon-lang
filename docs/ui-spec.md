@@ -110,18 +110,21 @@ data MainAlign = MainStart | MainCenter | MainEnd | MainSpaceBetween
 | `WithFrame` | `width :: Int`, `height :: Int`, `child :: Element msg` | фиксированный размер (`0` = auto) |
 | `WithForeground` | `color :: Color`, `child :: Element msg` | цвет текста/иконки |
 
-### 5.2 Forward-declare (тайпчек v0.1, рендер Phase 4.5)
-
-Объявлены в `Core.UI`, но рантайм v0.1 возвращает диагностику «not implemented» при попадании в draw path:
+### 5.2 Phase 4.5 (реализовано в v0.1)
 
 | Конструктор | Назначение |
 |-------------|------------|
-| `Input` | однострочный ввод: курсор, выделение, clipboard, IME |
-| `List` | вертикальный список со скроллом |
+| `Input` | однострочный ввод: курсор, Backspace/Delete, Ctrl+A, Ctrl+V |
+| `List` | вертикальный список со скроллом (`scrollOffset` + `onScroll`, wheel) |
+
+### 5.3 Forward-declare (тайпчек v0.1, рендер позже)
+
+| Конструктор | Назначение |
+|-------------|------------|
 | `ProgressBar` | индикатор загрузки (Storm/Agent) |
 | `Markdown` | рендер вердикта агента (subset: bold, code, list) |
 
-### 5.3 Полное определение (нормативное)
+### 5.4 Полное определение (нормативное)
 
 ```moon
 data Element msg =

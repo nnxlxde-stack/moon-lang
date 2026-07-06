@@ -46,6 +46,39 @@ private final class HostController: @unchecked Sendable {
         }
     }
 
+    func mouseWheel(delta: Int, x: Float, y: Float) {
+        do {
+            let changed = try runSync { try await self.loop.handleMouseWheel(delta: delta, x: x, y: y) }
+            if changed {
+                window.invalidate()
+            }
+        } catch {
+            fputs("moon-ui: \(error)\n", stderr)
+        }
+    }
+
+    func keyChar(_ codeUnit: UInt16) {
+        do {
+            let changed = try runSync { try await self.loop.handleKeyChar(codeUnit) }
+            if changed {
+                window.invalidate()
+            }
+        } catch {
+            fputs("moon-ui: \(error)\n", stderr)
+        }
+    }
+
+    func keyDown(virtualKey: Int32, controlPressed: Bool) {
+        do {
+            let changed = try runSync { try await self.loop.handleKeyDown(virtualKey: virtualKey, controlPressed: controlPressed) }
+            if changed {
+                window.invalidate()
+            }
+        } catch {
+            fputs("moon-ui: \(error)\n", stderr)
+        }
+    }
+
     private func runSync<T: Sendable>(_ work: @Sendable @escaping () async throws -> T) throws -> T {
         let semaphore = DispatchSemaphore(value: 0)
         nonisolated(unsafe) var result: Result<T, Error>?
@@ -101,6 +134,18 @@ enum WinUIHost {
 
         controller.window.onClick = { x, y in
             controller.click(x: x, y: y)
+        }
+
+        controller.window.onMouseWheel = { delta, x, y in
+            controller.mouseWheel(delta: delta, x: x, y: y)
+        }
+
+        controller.window.onKeyChar = { codeUnit in
+            controller.keyChar(codeUnit)
+        }
+
+        controller.window.onKeyDown = { virtualKey, controlPressed in
+            controller.keyDown(virtualKey: virtualKey, controlPressed: controlPressed)
         }
 
         controller.window.onClose = {}

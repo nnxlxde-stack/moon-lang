@@ -14,6 +14,9 @@ final class WinWindow {
     var onMouseMove: ((Float, Float) -> Void)?
     var onMouseDown: ((Float, Float) -> Void)?
     var onClick: ((Float, Float) -> Void)?
+    var onMouseWheel: ((Int, Float, Float) -> Void)?
+    var onKeyChar: ((UInt16) -> Void)?
+    var onKeyDown: ((Int32, Bool) -> Void)?
     var onClose: (() -> Void)?
 
     func create(title: String, width: Int32, height: Int32) throws {
@@ -129,6 +132,21 @@ final class WinWindow {
             let x = Float(Int16(lParam & 0xFFFF))
             let y = Float(Int16((lParam >> 16) & 0xFFFF))
             window.onClick?(x, y)
+            return 0
+        case UINT(WM_MOUSEWHEEL):
+            let delta = Int(Int16((UInt32(lParam) >> 16) & 0xFFFF))
+            var point = POINT(x: LONG(lParam & 0xFFFF), y: LONG((lParam >> 16) & 0xFFFF))
+            if let hwnd {
+                ScreenToClient(hwnd, &point)
+            }
+            window.onMouseWheel?(delta, Float(point.x), Float(point.y))
+            return 0
+        case UINT(WM_CHAR):
+            window.onKeyChar?(UInt16(wParam))
+            return 0
+        case UINT(WM_KEYDOWN):
+            let controlPressed = (Int32(GetKeyState(Int32(VK_CONTROL))) & 0x8000) != 0
+            window.onKeyDown?(Int32(wParam), controlPressed)
             return 0
         default:
             return DefWindowProcW(hwnd, msg, wParam, lParam)

@@ -62,6 +62,8 @@ enum SceneBuilder {
         case "Column": return .column
         case "Row": return .row
         case "Card": return .card
+        case "Input": return .input
+        case "List": return .list
         case "Spacer": return .spacer
         case "WithPadding", "WithFrame", "WithForeground": return .padding
         default: return .unsupported
@@ -71,8 +73,8 @@ enum SceneBuilder {
     private static func childElements(_ value: RuntimeValue) -> [RuntimeValue] {
         guard case .record(let typeName, let fields) = value, let typeName else { return [] }
         switch typeName {
-        case "Column", "Row":
-            return MoonElementBridge.arrayField(fields, "children")
+        case "Column", "Row", "List":
+            return MoonElementBridge.arrayField(fields, fieldsKey(for: typeName))
         case "Button":
             if let label = fields["label"] { return [label] }
             return []
@@ -81,6 +83,13 @@ enum SceneBuilder {
             return []
         default:
             return []
+        }
+    }
+
+    private static func fieldsKey(for typeName: String) -> String {
+        switch typeName {
+        case "List": return "items"
+        default: return "children"
         }
     }
 }

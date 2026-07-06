@@ -67,6 +67,16 @@ enum MoonElementBridge {
         case "WithForeground":
             return try toLayoutElement(fields["child"] ?? .null)
 
+        case "Input":
+            return .input()
+
+        case "List":
+            return .list(
+                spacing: 8,
+                padding: 0,
+                children: try arrayField(fields, "items").map(toLayoutElement)
+            )
+
         default:
             throw MoonUIError.invalidApp("Unsupported Element constructor: \(typeName)")
         }
@@ -87,6 +97,17 @@ enum MoonElementBridge {
             return ElementPayload(
                 onPress: fields["onPress"],
                 enabled: boolField(fields, "enabled", default: true)
+            )
+        case "Input":
+            return ElementPayload(
+                text: stringField(fields, "value") ?? "",
+                placeholder: stringField(fields, "placeholder"),
+                onChange: fields["onChange"]
+            )
+        case "List":
+            return ElementPayload(
+                onScroll: fields["onScroll"],
+                scrollOffset: intField(fields, "scrollOffset", default: 0)
             )
         case "WithForeground":
             var child = payload(for: fields["child"] ?? .null)
@@ -142,6 +163,11 @@ enum MoonElementBridge {
     private static func floatField(_ fields: [String: RuntimeValue], _ key: String, default defaultValue: Float) -> Float {
         if case .int(let value) = fields[key] { return Float(value) }
         if case .double(let value) = fields[key] { return Float(value) }
+        return defaultValue
+    }
+
+    private static func intField(_ fields: [String: RuntimeValue], _ key: String, default defaultValue: Int) -> Int {
+        if case .int(let value) = fields[key] { return value }
         return defaultValue
     }
 
